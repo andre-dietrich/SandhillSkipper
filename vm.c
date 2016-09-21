@@ -43,39 +43,6 @@ vm_env* vm_init (ss_ushort memory_size,
     env->status = VM_OK;
     env->execution_steps = execution_steps;
 
-    env->operator_list[NOT] = op_NOT;
-    env->operator_list[NEG] = op_NEG;
-
-    env->operator_list[ADD] = op_ADD;
-    env->operator_list[SUB] = op_SUB;
-    env->operator_list[MUL] = op_MUL;
-    env->operator_list[DIV] = op_DIV;
-    env->operator_list[MOD] = op_MOD;
-    env->operator_list[POW] = op_POW;
-
-    env->operator_list[LT]  = op_LT;
-    env->operator_list[LE]  = op_LE;
-    env->operator_list[GE]  = op_GE;
-    env->operator_list[GT]  = op_GT;
-    env->operator_list[NE]  = op_NE;
-    env->operator_list[EQ]  = op_EQ;
-
-    env->operator_list[AND] = op_AND;
-    env->operator_list[OR]  = op_OR;
-    env->operator_list[XOR] = op_XOR;
-    env->operator_list[IN]  = op_IN;
-
-    env->operator_list[B_NOT] = op_B_NOT;
-    env->operator_list[B_AND] = op_B_AND;
-    env->operator_list[B_OR]  = op_B_OR;
-    env->operator_list[B_XOR] = op_B_XOR;
-
-    env->operator_list[B_SHIFT_L] = op_B_SHIFT_L;
-    env->operator_list[B_SHIFT_R] = op_B_SHIFT_R;
-
-    env->operator_list[EX] = op_EX;
-
-
     vm_add_function(env, (ss_str)"print", (void*)vm_sys_print,    (ss_str) "", 1); //"print: prints out the passed parameters, the last defines the return value ...");
 //     vm_add_function(env, (ss_str)"help",  (void*)vm_sys_help,     (ss_str) "", 1); //"general help function ...");
     vm_add_function(env, (ss_str)"mem",   (void*)vm_sys_mem,      (ss_str) "", 1); //"show mem ...");
@@ -532,7 +499,10 @@ case CALL_OP:
 /*---------------------------------------------------------------------------*/
     uc_len = (ss_byte)*env->pc++;
 
-    uc_i = (env->operator_list[(ss_byte)*env->pc++])(&tmp, dyn_list_get_ref(&env->stack, -uc_len-1), uc_len+1);
+    uc_i = vm_op_dispatch(&tmp,
+                          dyn_list_get_ref(&env->stack, -uc_len-1),
+                          uc_len+1,
+                          (ss_byte)*env->pc++);
 
     dyn_list_popi(&env->stack, uc_len);
 

@@ -52,8 +52,6 @@ struct vm {
     ss_char status;
     ss_short execution_steps;
 
-    fct operator_list[25];
-
     dyn_c exceptions;
 } __attribute__ ((packed));
 typedef struct vm vm_env;

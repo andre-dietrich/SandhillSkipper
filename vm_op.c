@@ -1,20 +1,15 @@
 #include "vm_op.h"
 
-ss_char op_NOT(dyn_c *rslt, dyn_c op[], ss_byte len)
+typedef ss_char (*unary)  (dyn_c*);
+typedef ss_char (*binary) (dyn_c*, dyn_c*);
+
+ss_char op_unary( dyn_c *rslt, dyn_c op[], unary fct )
 {
     dyn_set_ref(rslt, op);
-    return dyn_op_not(rslt);
+    return (*fct)(rslt);
 };
 
-
-ss_char op_NEG(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    dyn_set_ref(rslt, op);
-    return dyn_op_neg(rslt);
-};
-
-
-ss_char op_ADD(dyn_c *rslt, dyn_c op[], ss_byte len)
+ss_char op_binary(dyn_c *rslt, dyn_c op[], ss_byte len, binary fct, ss_byte shortcut)
 {
     ss_char status = VM_OK;
     if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
@@ -23,415 +18,26 @@ ss_char op_ADD(dyn_c *rslt, dyn_c op[], ss_byte len)
     dyn_set_ref(rslt, op);
     while (--len && status) {
         if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_ADD(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
+GOTO_REC:   status = op_binary(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref), fct, shortcut);
         else
-GOTO_NRM:   status = dyn_op_add(rslt, op);
-    }
-    return status;
-};
+GOTO_NRM:   status = (*fct)(rslt, op);
 
-
-ss_char op_SUB(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_SUB(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_sub(rslt, op);
-    }
-    return status;
-};
-
-
-ss_char op_MUL(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_MUL(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_mul(rslt, op);
-    }
-    return status;
-};
-
-
-ss_char op_DIV(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_DIV(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_div(rslt, op);
-    }
-    return status;
-};
-
-
-ss_char op_MOD(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_MOD(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_mod(rslt, op);
-    }
-    return status;
-};
-
-
-ss_char op_POW(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_POW(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_pow(rslt, op);
-    }
-    return status;
-};
-
-
-ss_char op_LT(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    while (--len && status) {
-        dyn_set_ref(rslt, DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op);
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_LT(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_lt(rslt, op);
-
-        if (rslt->data.b != DYN_TRUE)
-            break;
-    }
-    return status;
-};
-
-
-ss_char op_LE(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    while (--len && status) {
-        dyn_set_ref(rslt, DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op);
-
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_LE(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_le(rslt, op);
-
-        if (rslt->data.b != DYN_TRUE)
-            break;
-    }
-    return status;
- };
-
-
-ss_char op_GT(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    while (--len && status) {
-        dyn_set_ref(rslt, DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op);
-
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_GT(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_gt(rslt, op);
-
-        if (rslt->data.b != DYN_TRUE)
-            break;
-    }
-    return status;
-};
-
-
-ss_char op_GE(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    while (--len && status) {
-        dyn_set_ref(rslt, DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op);
-
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_GE(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_ge(rslt, op);
-
-        if (rslt->data.b != DYN_TRUE)
-            break;
-    }
-    return status;
-};
-
-/*
-ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    ss_short i;
-
-    dyn_c *first;
-
-
-    while (len && status) {
-        first = op;
-        if (DYN_TYPE(first) == MISCELLANEOUS) {
-            status = op_NE( rslt,
-                            first->data.ref->data.list->container,
-                            DYN_LIST_LEN(first->data.ref));
-            if (!rslt->data.b)
-                break;
-
-            for (i=0; i<DYN_LIST_LEN(first->data.ref) && status; ++i) {
-                dyn_set_ref(rslt, DYN_LIST_GET_REF(first->data.ref, i));
-                for (j=0; j<=len && status; ++j) {
-                    status = dyn_op_ne()
-                }
+        if (shortcut) {
+            if (shortcut == 1) {
+                if (rslt->data.b != DYN_TRUE)
+                    break;
+            } else if (shortcut == 2) {
+                if (rslt->data.b == DYN_TRUE)
+                    break;
+            } else if (shortcut == 3) {
+                if (dyn_get_bool_3(rslt) == DYN_NONE)
+                    break;
             }
+
         }
     }
-    while (--len && status) {
-        first = op;
-        for(i=0; i<=len && status; ++i) {
-
-            dyn_set_ref(rslt, first);
-            if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:       status = op_NE(rslt, op->data.ref->data.list->container,
-                                     DYN_LIST_LEN(op->data.ref));
-            else
-GOTO_NRM:       status = dyn_op_ne(rslt, op);
-
-            if (!rslt->data.b)
-                return status;
-        }
-        op = first+1;
-    }
-
     return status;
-};
-*/
-/*
-ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    ss_short i;
-
-    dyn_c *first;
-
-    while (--len && status) {
-        first = op;
-        if (DYN_TYPE(first) == MISCELLANEOUS) {
-            status = op_NE( rslt,
-                            first->data.ref->data.list->container,
-                            DYN_LIST_LEN(first->data.ref));
-
-            if (!rslt->data.b)
-                return status;
-
-            for (j=0; j<DYN_LIST_LEN(first->data.ref); ++j) {
-                for(i=)
-            }
-        }
-        for(i=0; i<=len && status; ++i) {
-
-            dyn_set_ref(rslt, first);
-            if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:       status = op_NE(rslt, op->data.ref->data.list->container,
-                                     DYN_LIST_LEN(op->data.ref));
-            else
-                status = dyn_op_ne(rslt, op);
-
-            if (!rslt->data.b)
-                return status;
-        }
-        op = first+1;
-    }
-
-    return status;
-};
-*/
-
-ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    ss_short i;
-
-    dyn_c *first = op;
-
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_NOT_NONE(rslt)) {
-        first = rslt;
-        goto GOTO_NRM;
-    }
-
-    while (--len && status) {
-        first = DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op;
-        for(i=0; i<=len && status; ++i) {
-
-            dyn_set_ref(rslt, first);
-            if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:       status = op_NE(rslt, op->data.ref->data.list->container,
-                                     DYN_LIST_LEN(op->data.ref));
-            else
-GOTO_NRM:       status = dyn_op_ne(rslt, op);
-
-            if (!rslt->data.b)
-                return status;
-        }
-        op = first+1;
-    }
-
-    return status;
-};
-
-
-/*
-ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    ss_short i;
-
-    dyn_c *first = op;
-
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_NOT_NONE(rslt)) {
-        first = rslt;
-        goto GOTO_NRM;
-    }
-
-    while (--len && status) {
-        first = DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op;
-        for(i=0; i<len && status; ++i) {
-
-            dyn_set_ref(rslt, first);
-            if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:       status = op_NE(rslt, op->data.ref->data.list->container,
-                                     DYN_LIST_LEN(op->data.ref));
-            else
-GOTO_NRM:       status = dyn_op_ne(rslt, op);
-
-            if (!rslt->data.b)
-                return status;
-        }
-        op = first+1;
-    }
-
-    return status;
-};
-*/
-
-ss_char op_EQ(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_NOT_NONE(rslt))            goto GOTO_NRM;
-
-    while (--len && status) {
-        dyn_set_ref(rslt, DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op);
-
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_EQ(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_eq(rslt, op);
-
-        if (rslt->data.b != DYN_TRUE)
-              break;
-    }
-    return status;
-};
-
-
-ss_char op_AND(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_AND(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_and(rslt, op);
-
-        if (rslt->data.b != DYN_TRUE)
-            break;
-    }
-    return status;
-};
-
-
-ss_char op_OR (dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_OR(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_or(rslt, op);
-
-        if (rslt->data.b == DYN_TRUE)
-            break;
-    }
-    return status;
-};
-
-ss_char op_XOR(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_NOT_NONE(rslt))            goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_XOR(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_xor(rslt, op);
-
-        if (dyn_get_bool_3(rslt) == DYN_NONE)
-            break;
-    }
-    return status;
-};
+}
 
 ss_char op_IN (dyn_c *rslt, dyn_c op[], ss_byte len)
 {
@@ -459,108 +65,93 @@ GOTO_NRM:   status = dyn_op_in(rslt, op);
     return status;
 };
 
-ss_char op_B_NOT(dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    dyn_set_ref(rslt, op);
 
-    return dyn_op_b_not(rslt);
-};
-
-ss_char op_B_AND(dyn_c *rslt, dyn_c op[], ss_byte len)
+ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
 {
     ss_char status = VM_OK;
+    ss_short i;
+
+    dyn_c *first = op;
+
     if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_B_AND(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_b_and(rslt, op);
+    if (DYN_NOT_NONE(rslt)) {
+        first = rslt;
+        goto GOTO_NRM;
     }
-    return status;
-};
 
-
-ss_char op_B_OR (dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
     while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_B_OR(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_b_or(rslt, op);
-    }
-    return status;
-};
+        first = DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op;
+        for(i=0; i<=len && status; ++i) {
 
+            dyn_set_ref(rslt, first);
+            if (DYN_TYPE(++op) == MISCELLANEOUS)
+GOTO_REC:       status = op_NE(rslt, op->data.ref->data.list->container,
+                                     DYN_LIST_LEN(op->data.ref));
+            else
+GOTO_NRM:       status = dyn_op_ne(rslt, op);
 
-ss_char op_B_XOR (dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_B_XOR(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_b_xor(rslt, op);
-    }
-    return status;
-};
-
-ss_char op_B_SHIFT_L (dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_B_SHIFT_L(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_b_shift_l(rslt, op);
-    }
-    return status;
-};
-
-
-ss_char op_B_SHIFT_R (dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    ss_char status = VM_OK;
-    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
-    if (DYN_TYPE(rslt))                goto GOTO_NRM;
-
-    dyn_set_ref(rslt, op);
-    while (--len && status) {
-        if (DYN_TYPE(++op) == MISCELLANEOUS)
-GOTO_REC:   status = op_B_SHIFT_R(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref));
-        else
-GOTO_NRM:   status = dyn_op_b_shift_r(rslt, op);
-    }
-    return status;
-};
-
-
-ss_char op_EX (dyn_c *rslt, dyn_c op[], ss_byte len)
-{
-    if (DYN_IS_REFERENCE(op)) {
-        if (DYN_TYPE(op->data.ref) == LIST) {
-            dyn_set_ref(rslt,op);
-            rslt->type = MISCELLANEOUS;
-            return VM_OK;
+            if (!rslt->data.b)
+                return status;
         }
+        op = first+1;
     }
-    return VM_ERROR;
-}
+
+    return status;
+};
+
+
+ss_char vm_op_dispatch (dyn_c *rslt, dyn_c op[], ss_byte len, ss_byte op_id)
+{
+    ss_byte type = 1;
+    ss_byte shortcut = 0;
+    void * fct = NULL;
+
+    switch (op_id) {
+        case EX: {
+            if (DYN_IS_REFERENCE(op)) {
+                if (DYN_TYPE(op->data.ref) == LIST) {
+                    dyn_set_ref(rslt,op);
+                    rslt->type = MISCELLANEOUS;
+                    return VM_OK;
+                }
+            }
+            return VM_ERROR;
+        }
+        case ADD:             fct = &dyn_op_add;      break;
+        case SUB:             fct = &dyn_op_sub;      break;
+        case MUL:             fct = &dyn_op_mul;      break;
+        case DIV:             fct = &dyn_op_div;      break;
+        case MOD:             fct = &dyn_op_mod;      break;
+        case POW:             fct = &dyn_op_pow;      break;
+        case B_AND:           fct = &dyn_op_b_and;    break;
+        case B_OR:            fct = &dyn_op_b_or;     break;
+        case B_XOR:           fct = &dyn_op_b_xor;    break;
+        case B_SHIFT_R:       fct = &dyn_op_b_shift_r;break;
+        case B_SHIFT_L:       fct = &dyn_op_b_shift_l;break;
+
+        case LE:    shortcut = 1; fct = &dyn_op_le;   break;
+        case LT:    shortcut = 1; fct = &dyn_op_lt;   break;
+        case GT:    shortcut = 1; fct = &dyn_op_gt;   break;
+        case GE:    shortcut = 1; fct = &dyn_op_ge;   break;
+        case EQ:    shortcut = 1; fct = &dyn_op_eq;   break;
+        case AND:   shortcut = 1; fct = &dyn_op_and;  break;
+
+        case OR:    shortcut = 2; fct = &dyn_op_or;   break;
+        case XOR:   shortcut = 3; fct = &dyn_op_xor;  break;
+
+        case NE:    return op_NE(rslt, op, len);
+        case IN:    return op_IN(rslt, op, len);
+
+        case NOT:   type = 0; fct = &dyn_op_not;      break;
+        case NEG:   type = 0; fct = &dyn_op_neg;      break;
+        case B_NOT: type = 0; fct = &dyn_op_b_not;    break;
+    }
+
+    if(type)
+        return op_binary(rslt, op, len, fct, shortcut);
+
+    return op_unary (rslt, op, fct);
+};
 
 
 ss_char vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
