@@ -23,21 +23,38 @@ GOTO_REC:   status = op_binary(rslt, op->data.ref->data.list->container, DYN_LIS
 GOTO_NRM:   status = (*fct)(rslt, op);
 
         if (shortcut) {
-            if (shortcut == 1) {
-                if (rslt->data.b != DYN_TRUE)
-                    break;
-            } else if (shortcut == 2) {
-                if (rslt->data.b == DYN_TRUE)
-                    break;
-            } else if (shortcut == 3) {
-                if (dyn_get_bool_3(rslt) == DYN_NONE)
-                    break;
+            switch (shortcut) {
+                case 1: if (rslt->data.b != DYN_TRUE) len = 1;  // AND
+                        break;
+                case 2: if (rslt->data.b == DYN_TRUE) len = 1;  // OR
+                        break;
+                case 3: if (dyn_get_bool_3(rslt) == DYN_NONE) len = 1; // XOR
+                        break;
             }
-
         }
     }
     return status;
 }
+
+ss_char op_binary2(dyn_c *rslt, dyn_c op[], ss_byte len, binary fct)
+{
+    ss_char status = VM_OK;
+    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
+    if (DYN_TYPE(rslt))                goto GOTO_NRM;
+
+    while (--len && status) {
+        dyn_set_ref(rslt, DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op);
+        if (DYN_TYPE(++op) == MISCELLANEOUS)
+GOTO_REC:   status = op_binary2(rslt, op->data.ref->data.list->container, DYN_LIST_LEN(op->data.ref), fct);
+        else
+GOTO_NRM:   status = (*fct)(rslt, op);
+
+        if (rslt->data.b != DYN_TRUE)
+            break;
+    }
+    return status;
+};
+
 
 ss_char op_IN (dyn_c *rslt, dyn_c op[], ss_byte len)
 {
@@ -102,11 +119,36 @@ GOTO_NRM:       status = dyn_op_ne(rslt, op);
 
 ss_char vm_op_dispatch (dyn_c *rslt, dyn_c op[], ss_byte len, ss_byte op_id)
 {
-    ss_byte type = 1;
-    ss_byte shortcut = 0;
-    void * fct = NULL;
-
     switch (op_id) {
+        case ADD:       return op_binary(rslt, op, len, &dyn_op_add, 0);
+        case SUB:       return op_binary(rslt, op, len, &dyn_op_sub, 0);
+        case MUL:       return op_binary(rslt, op, len, &dyn_op_mul, 0);
+        case DIV:       return op_binary(rslt, op, len, &dyn_op_div, 0);
+        case MOD:       return op_binary(rslt, op, len, &dyn_op_mod, 0);
+        case POW:       return op_binary(rslt, op, len, &dyn_op_pow, 0);
+        case B_AND:     return op_binary(rslt, op, len, &dyn_op_b_and, 0);
+        case B_OR:      return op_binary(rslt, op, len, &dyn_op_b_or,  0);
+        case B_XOR:     return op_binary(rslt, op, len, &dyn_op_b_xor, 0);
+        case B_SHIFT_R: return op_binary(rslt, op, len, &dyn_op_b_shift_r, 0);
+        case B_SHIFT_L: return op_binary(rslt, op, len, &dyn_op_b_shift_l, 0);
+
+        case AND:       return op_binary(rslt, op, len, &dyn_op_and, 1);
+        case OR:        return op_binary(rslt, op, len, &dyn_op_or,  2);
+        case XOR:       return op_binary(rslt, op, len, &dyn_op_xor, 3);
+
+        case LE:        return op_binary2(rslt, op, len, &dyn_op_le);
+        case LT:        return op_binary2(rslt, op, len, &dyn_op_lt);
+        case GT:        return op_binary2(rslt, op, len, &dyn_op_gt);
+        case GE:        return op_binary2(rslt, op, len, &dyn_op_ge);
+        case EQ:        return op_binary2(rslt, op, len, &dyn_op_eq);
+
+        case NE:        return op_NE(rslt, op, len);
+        case IN:        return op_IN(rslt, op, len);
+
+        case NOT:       return op_unary (rslt, op, &dyn_op_not);
+        case NEG:       return op_unary (rslt, op, &dyn_op_neg);
+        case B_NOT:     return op_unary (rslt, op, &dyn_op_b_not);
+
         case EX: {
             if (DYN_IS_REFERENCE(op)) {
                 if (DYN_TYPE(op->data.ref) == LIST) {
@@ -117,40 +159,10 @@ ss_char vm_op_dispatch (dyn_c *rslt, dyn_c op[], ss_byte len, ss_byte op_id)
             }
             return VM_ERROR;
         }
-        case ADD:             fct = &dyn_op_add;      break;
-        case SUB:             fct = &dyn_op_sub;      break;
-        case MUL:             fct = &dyn_op_mul;      break;
-        case DIV:             fct = &dyn_op_div;      break;
-        case MOD:             fct = &dyn_op_mod;      break;
-        case POW:             fct = &dyn_op_pow;      break;
-        case B_AND:           fct = &dyn_op_b_and;    break;
-        case B_OR:            fct = &dyn_op_b_or;     break;
-        case B_XOR:           fct = &dyn_op_b_xor;    break;
-        case B_SHIFT_R:       fct = &dyn_op_b_shift_r;break;
-        case B_SHIFT_L:       fct = &dyn_op_b_shift_l;break;
-
-        case LE:    shortcut = 1; fct = &dyn_op_le;   break;
-        case LT:    shortcut = 1; fct = &dyn_op_lt;   break;
-        case GT:    shortcut = 1; fct = &dyn_op_gt;   break;
-        case GE:    shortcut = 1; fct = &dyn_op_ge;   break;
-        case EQ:    shortcut = 1; fct = &dyn_op_eq;   break;
-        case AND:   shortcut = 1; fct = &dyn_op_and;  break;
-
-        case OR:    shortcut = 2; fct = &dyn_op_or;   break;
-        case XOR:   shortcut = 3; fct = &dyn_op_xor;  break;
-
-        case NE:    return op_NE(rslt, op, len);
-        case IN:    return op_IN(rslt, op, len);
-
-        case NOT:   type = 0; fct = &dyn_op_not;      break;
-        case NEG:   type = 0; fct = &dyn_op_neg;      break;
-        case B_NOT: type = 0; fct = &dyn_op_b_not;    break;
     }
 
-    if(type)
-        return op_binary(rslt, op, len, fct, shortcut);
-
-    return op_unary (rslt, op, fct);
+    dyn_free(rslt);
+    return VM_ERROR;
 };
 
 
