@@ -3,7 +3,9 @@
 
 #include "vm.h"
 #include "vm_op.h"
+#include "vm_opcode.h"
 #include "vm_trace.h"
+
 
 
 vm_env* vm_init (ss_ushort memory_size,
@@ -75,7 +77,7 @@ vm_env* vm_init (ss_ushort memory_size,
 
 
     vm_add_function(env, (ss_str)"print", (void*)vm_sys_print,    (ss_str) "", 1); //"print: prints out the passed parameters, the last defines the return value ...");
-    vm_add_function(env, (ss_str)"help",  (void*)vm_sys_help,     (ss_str) "", 1); //"general help function ...");
+//     vm_add_function(env, (ss_str)"help",  (void*)vm_sys_help,     (ss_str) "", 1); //"general help function ...");
     vm_add_function(env, (ss_str)"mem",   (void*)vm_sys_mem,      (ss_str) "", 1); //"show mem ...");
     vm_add_function(env, (ss_str)"del",   (void*)vm_sys_del,      (ss_str) "", 1); //"delete from memory ...");
     /*------------------------------------------------------------------------*/
@@ -153,48 +155,12 @@ ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
 
     ss_short execution_steps = env->execution_steps;
 
-    static void* dispatch_table[] = {
-          &&GOTO__RET, &&GOTO__RET_L, &&GOTO__RET_P,
-          &&GOTO__SP_SAVE,
-
-          &&GOTO__CST_N,    &&GOTO__CST_0,   &&GOTO__CST_1,
-          &&GOTO__CST_B,    &&GOTO__CST_S,
-          &&GOTO__CST_I,    &&GOTO__CST_F,
-
-          &&GOTO__CST_STR,  &&GOTO__CST_LST,
-          &&GOTO__CST_SET,  &&GOTO__CST_DCT,
-
-          &&GOTO__LOAD,     &&GOTO__ELEM,
-          &&GOTO__STORE,    &&GOTO__STORE_RF, &&GOTO__STORE_LOC,
-
-          &&GOTO__CALL_OPX,
-          &&GOTO__CALL_OP,
-
-          &&GOTO__CALL_FCTX,
-          &&GOTO__CALL_FCT,
-
-          &&GOTO__FJUMP,    &&GOTO__JUMP,
-
-          &&GOTO__PROC,
-
-          &&GOTO__LOC,      &&GOTO__LOCX,
-
-          &&GOTO__IT_INIT,
-          &&GOTO__IT_NEXT0, &&GOTO__IT_NEXT1,
-          &&GOTO__IT_NEXT2, &&GOTO__IT_NEXT3,
-
-          &&GOTO__IT_STORE, &&GOTO__IT_LIMIT,
-
-          &&GOTO__IT_GROUP, &&GOTO__IT_ORDER,
-          &&GOTO__IT_AS,
-
-          &&GOTO__EXIT,
-
-          &&GOTO__TRY,
-
-          &&GOTO__REF
-	      };
 /*---------------------------------------------------------------------------*/
+//DISPACH:
+/*---------------------------------------------------------------------------*/
+do{
+/*---------------------------------------------------------------------------*/
+//Exit jumps here
 GOTO__DISPACH:
 /*---------------------------------------------------------------------------*/
     dyn_free(&tmp);
@@ -247,11 +213,12 @@ GOTO__DISPACH:
 
     //printf("DICT: %s\n", dyn_get_string(&env->local));
 
-    goto *dispatch_table[(ss_byte)(POP_I & *env->pc++)];
+switch((ss_byte)(POP_I & *env->pc++)){
 /*---------------------------------------------------------------------------*/
+case RET:
 GOTO__RET:
-GOTO__RET_L:
-GOTO__RET_P:
+case RET_L:
+case RET_P:
 /*---------------------------------------------------------------------------*/
 
     dyn_list_pop(&env->stack, &tmp); // return value
@@ -280,7 +247,7 @@ GOTO__RET_P:
         else
             dyn_list_push(&env->stack, &tmp);
 
-        goto GOTO__DISPACH;
+        continue;
     }
 
     if (_exit_)
@@ -291,9 +258,9 @@ GOTO__RET_P:
 
     dyn_list_push(&env->stack, &tmp);
 
-    goto GOTO__DISPACH;
+    continue;
 /*---------------------------------------------------------------------------*/
-GOTO__SP_SAVE:
+case SP_SAVE:
 /*---------------------------------------------------------------------------*/
     dyn_set_int(&tmp, env->sp);
     dyn_list_push(&env->stack, &tmp);
@@ -304,47 +271,47 @@ GOTO__SP_SAVE:
     else
         env->new_scope = 1;
 
-    goto GOTO__DISPACH;
+    continue;
 /*---------------------------------------------------------------------------*/
-GOTO__CST_N:
+case CST_N:
 /*---------------------------------------------------------------------------*/
     dyn_list_push(&env->stack, &none);
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_0:
+case CST_0:
 /*---------------------------------------------------------------------------*/
     dyn_set_bool(&tmp, 0);
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_1:
+case CST_1:
 /*---------------------------------------------------------------------------*/
     dyn_set_bool(&tmp, 1);
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_B:
+case CST_B:
 /*---------------------------------------------------------------------------*/
     dyn_set_int(&tmp, (ss_int)*(env->pc++));
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_S:
+case CST_S:
 /*---------------------------------------------------------------------------*/
     dyn_set_int(&tmp, *((ss_short*) env->pc));
     env->pc += 2;
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_I:
+case CST_I:
 /*---------------------------------------------------------------------------*/
     dyn_set_int(&tmp, *((ss_int*) env->pc));
     env->pc+=4;
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_F:
+case CST_F:
 /*---------------------------------------------------------------------------*/
     dyn_set_float(&tmp, *((ss_float*) env->pc));
     env->pc+=4;
@@ -352,21 +319,20 @@ GOTO__CST_F:
 /*---------------------------------------------------------------------------*/
 GOTO__PUSH_TMP:
 /*---------------------------------------------------------------------------*/
-    dyn_list_push(&env->stack, &none);
-    dyn_move(&tmp, DYN_LIST_GET_END(&env->stack));
-    goto GOTO__DISPACH;
+    dyn_list_push(&env->stack, &tmp);
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_STR:
+case CST_STR:
 /*---------------------------------------------------------------------------*/
     dyn_list_push(&env->stack, &none);
     dyn_set_ref( DYN_LIST_GET_REF_END(&env->stack, 1),
                  DYN_LIST_GET_REF    (&env->data, env->dp+ (ss_byte)*env->pc++));
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_LST:
+case CST_LST:
 /*---------------------------------------------------------------------------*/
     us_len = *((ss_ushort*) env->pc);
     env->pc+=2;
@@ -380,13 +346,15 @@ GOTO__CST_LST:
     }
 
     dyn_list_popi(&env->stack, us_len);
+    dyn_list_push(&env->stack, &none);
+    dyn_move(&tmp, DYN_LIST_GET_END(&env->stack));
 
-    goto GOTO__PUSH_TMP;;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__CST_SET:
+case CST_SET:
 /*---------------------------------------------------------------------------*/
-//#ifdef S2_SET
+#ifdef S2_SET
     us_len = *((ss_ushort*) env->pc);
     env->pc+=2;
     dyn_set_set_len(&tmp, us_len);
@@ -395,11 +363,13 @@ GOTO__CST_SET:
         dyn_set_insert(&tmp, dyn_list_get_ref(&env->stack, -us_len+us_i));
 
     dyn_list_popi(&env->stack, us_len);
+    dyn_list_push(&env->stack, &none);
+    dyn_move(&tmp, DYN_LIST_GET_REF_END(&env->stack,1));
 
-    goto GOTO__PUSH_TMP;
-//#endif
+    continue;
+#endif
 /*---------------------------------------------------------------------------*/
-GOTO__CST_DCT:
+case CST_DCT:
 /*---------------------------------------------------------------------------*/
     uc_len = *((ss_byte*) env->pc++);
 
@@ -414,11 +384,13 @@ GOTO__CST_DCT:
                  dyn_dict_get(&tmp, cp_str));
     }
     dyn_list_popi(&env->stack, uc_len);
+    dyn_list_push(&env->stack, &none);
+    dyn_move(&tmp, DYN_LIST_GET_END(&env->stack));
 
-    goto GOTO__PUSH_TMP;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__LOAD:
+case LOAD:
 /*---------------------------------------------------------------------------*/
     dyn_list_push(&env->stack, &none);
 
@@ -435,16 +407,16 @@ GOTO__LOAD:
             dyc_ptr = DYN_DICT_GET_I_REF(&env->functions, us_i-1);
         else {
             env->status = VM_ERROR;
-            goto GOTO__DISPACH;
+            continue;
         }
     }
 
     dyn_set_ref(DYN_LIST_GET_END(&env->stack), dyc_ptr);
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__ELEM:
+case ELEM:
 /*---------------------------------------------------------------------------*/
     dyc_ptr = DYN_LIST_GET_REF_END(&env->stack, 2);            // get list
 
@@ -465,7 +437,7 @@ GOTO__ELEM:
                         dyc_ptr = dyn_list_get_ref(dyc_ptr, i_i);
                         if (dyc_ptr == NULL) {
                             env->status = VM_ERROR;
-                            goto GOTO__DISPACH;
+                            continue;
                         }
                         break;
         case DICT:     cp_str = dyn_get_string( DYN_LIST_GET_END(&env->stack) );
@@ -492,10 +464,10 @@ GOTO__ELEM:
         dyn_move(&tmp, DYN_LIST_GET_END(&env->stack));
     }
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__STORE:
+case STORE:
 /*---------------------------------------------------------------------------*/
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+ (ss_byte)*env->pc++))->data.str;
 
@@ -507,10 +479,10 @@ GOTO__STORE:
 
     dyn_set_ref(DYN_LIST_GET_END(&env->stack), dyc_ptr);
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__STORE_RF:
+case STORE_RF:
 /*---------------------------------------------------------------------------*/
     dyc_ptr = DYN_LIST_GET_REF_END(&env->stack, 2);
 
@@ -521,9 +493,9 @@ GOTO__STORE_RF:
     if (env->loc && DYN_TYPE(dyc_ptr->data.ref)==FUNCTION)
         dyn_dict_set_loc(env->loc);
 
-    goto GOTO__DISPACH;
+    continue;
 /*---------------------------------------------------------------------------*/
-GOTO__STORE_LOC:
+case STORE_LOC:
 /*---------------------------------------------------------------------------*/
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+ (ss_byte)*env->pc++))->data.str;
 
@@ -549,14 +521,14 @@ GOTO__STORE_LOC:
 
     dyn_set_ref(dyc_ptr, DYN_DICT_GET_I_REF(DYN_LIST_GET_END(&env->local), us_i));
 
-    goto GOTO__DISPACH;
+    continue;
 /*---------------------------------------------------------------------------*/
-GOTO__CALL_OPX:
+case CALL_OPX:
 /*---------------------------------------------------------------------------*/
     dyc_ptr2 = (DYN_LIST_GET_REF_END(&env->stack, *env->pc-1))->data.ref;
     dyn_move(dyc_ptr2, DYN_LIST_GET_REF_END(&env->stack, *env->pc-1));
 /*---------------------------------------------------------------------------*/
-GOTO__CALL_OP:
+case CALL_OP:
 /*---------------------------------------------------------------------------*/
     uc_len = (ss_byte)*env->pc++;
 
@@ -575,14 +547,14 @@ GOTO__CALL_OP:
     if (uc_i != VM_OK)
         env->status = VM_OPERATION_NOT_PERMITTED;
 
-    goto GOTO__DISPACH;
+    continue;
 /*---------------------------------------------------------------------------*/
-GOTO__CALL_FCTX:
+case CALL_FCTX:
 /*---------------------------------------------------------------------------*/
     dyc_ptr2 = (DYN_LIST_GET_REF_END(&env->stack, *env->pc-1))->data.ref;
     dyn_move(dyc_ptr2, DYN_LIST_GET_REF_END(&env->stack, *env->pc-1));
 /*---------------------------------------------------------------------------*/
-GOTO__CALL_FCT:
+case CALL_FCT:
 /*---------------------------------------------------------------------------*/
     uc_len = (ss_byte) *env->pc++;
 
@@ -617,7 +589,39 @@ GOTO__CALL_FCT:
                              DYN_DICT_GET_I_REF(DYN_LIST_GET_END(&env->local), uc_i+us_i));
                 }
                 dyn_list_popi(&env->stack, uc_len+1);
-                goto GOTO__EXEC_PROC;
+                //goto GOTO__EXEC_PROC;
+                /*---------------------------------------------------------------------------*/
+                //GOTO__EXEC_PROC:
+                /*---------------------------------------------------------------------------*/
+                dyn_list_push(&env->stack, &none);
+                if (dyc_ptr2)
+                    dyn_set_extern(DYN_LIST_GET_END(&env->stack), dyc_ptr2);
+
+                dyn_set_bool(&tmp, pop);
+                dyn_list_push(&env->stack, &tmp);
+                pop = 0;
+                dyn_set_int(&tmp, env->dp);
+                dyn_list_push(&env->stack, &tmp);
+                //env->pc+=1;
+                dyn_set_extern(&tmp, (void*)env->pc);
+                dyn_list_push(&env->stack, &tmp);
+                env->pc = dyn_fct_get_ss(dyc_ptr);
+
+                env->dp = DYN_LIST_LEN(&env->data);
+
+                us_len = (ss_ushort)*env->pc;
+                env->new_scope = 0;
+
+                // init data
+                env->pc+=2;
+                for (uc_i=0; uc_i<us_len; ++uc_i) {
+                    dyn_set_string(&tmp, env->pc);
+                    dyn_list_push(&env->data, &tmp);
+                    env->pc += ss_strlen(env->pc) + 1;
+                }
+
+                continue;
+
             }
             // Normal C-function
             case 1: {
@@ -646,22 +650,22 @@ GOTO__CALL_FCT:
             env->status = VM_FUNCTION_ERROR;
     }
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__FJUMP:
+case FJUMP:
 /*---------------------------------------------------------------------------*/
     dyn_list_pop(&env->stack, &tmp);
     if (dyn_get_bool_3(&tmp)>0)
         env->pc += 2;
     else
-GOTO__JUMP:
+case JUMP:
         env->pc += *((ss_short*)env->pc);
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__PROC:
+case PROC:
 /*---------------------------------------------------------------------------*/
     // info
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp + (ss_byte)*env->pc++))->data.str;
@@ -676,11 +680,11 @@ GOTO__PROC:
                    env->pc,
                    cp_str);
 
-    env->pc += us_len;
+   env->pc += us_len;
 
-    goto GOTO__PUSH_TMP;
+   goto GOTO__PUSH_TMP;
 /*---------------------------------------------------------------------------*/
-GOTO__LOC:
+case LOC:
 /*---------------------------------------------------------------------------*/
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+(ss_byte)*env->pc++))->data.str;
 
@@ -707,9 +711,9 @@ GOTO__LOC:
     dyn_list_push(&env->stack, &none);
     dyn_set_ref(DYN_LIST_GET_END(&env->stack), dyc_ptr);
 
-    goto GOTO__DISPACH;
+    continue;
 /*---------------------------------------------------------------------------*/
-GOTO__LOCX:
+case LOCX:
 /*---------------------------------------------------------------------------*/
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+(ss_byte)*env->pc++))->data.str;
 
@@ -752,9 +756,9 @@ GOTO__LOCX:
         env->status = VM_ERROR;
     }
 
-    goto GOTO__DISPACH;
+    continue;
 /*---------------------------------------------------------------------------*/
-GOTO__IT_INIT:
+case IT_INIT:
 /*---------------------------------------------------------------------------*/
     dyc_ptr = DYN_LIST_GET_REF(&env->stack, env->sp);
 
@@ -766,19 +770,19 @@ GOTO__IT_INIT:
 
     dyn_move(&tmp, DYN_LIST_GET_END(&env->local));
 
-    dyn_set_list_len(&tmp, 0);
+    dyn_set_list_len(&tmp, 10);
     dyn_list_push(&env->stack, &tmp);
     dyn_set_int(&tmp, 0);
     dyn_list_push(&env->stack, &tmp);
     dyn_list_push(&env->stack, &tmp);
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__IT_NEXT0:
-GOTO__IT_NEXT1:
-GOTO__IT_NEXT2:
-GOTO__IT_NEXT3:
+case IT_NEXT0:
+case IT_NEXT1:
+case IT_NEXT2:
+case IT_NEXT3:
 /*---------------------------------------------------------------------------*/
 {
     dyc_ptr2 = DYN_LIST_GET_REF(&env->stack, env->sp+2);
@@ -831,18 +835,18 @@ GOTO__IT_NEXT3:
     }
 
     dyc_ptr2 = NULL;
-    goto GOTO__DISPACH;
+    continue;
 }
 /*---------------------------------------------------------------------------*/
-GOTO__IT_STORE:
+case IT_STORE:
 /*---------------------------------------------------------------------------*/
     dyn_set_int(&tmp, dyn_get_int(DYN_LIST_GET_REF(&env->stack, env->sp+2))-1);
     dyn_list_push(DYN_LIST_GET_REF(&env->stack, env->sp+1), &tmp);
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__IT_LIMIT:
+case IT_LIMIT:
 /*---------------------------------------------------------------------------*/
     dyc_ptr = DYN_LIST_GET_END(&env->stack);
 
@@ -854,10 +858,10 @@ GOTO__IT_LIMIT:
         dyn_set_int(DYN_LIST_GET_REF(&env->stack, env->sp+2), 0);
     }
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__IT_GROUP:
+case IT_GROUP:
 /*---------------------------------------------------------------------------*/
     uc_len  = *((ss_byte*)env->pc++);
     cp_str  = dyn_get_string(DYN_LIST_GET_END(&env->stack));
@@ -900,10 +904,10 @@ GOTO__IT_GROUP:
     }
 
     dyn_list_popi(&env->stack, 1);
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__IT_ORDER:
+case IT_ORDER:
 /*---------------------------------------------------------------------------*/
     dyc_ptr = DYN_LIST_GET_REF(&env->stack, env->sp+1);
 
@@ -931,10 +935,10 @@ GOTO__IT_ORDER:
         dyn_set_int(dyn_list_get_ref(&env->stack, -1), 1);
     }
 
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
-GOTO__IT_AS:
+case IT_AS:
 /*---------------------------------------------------------------------------*/
     dyc_ptr = DYN_LIST_GET_REF(&env->stack, env->sp + 4);
     switch (*env->pc++) {
@@ -967,9 +971,10 @@ GOTO__IT_AS:
                 break;
     }
     dyn_list_popi(&env->stack, DYN_LIST_LEN(&env->stack) - env->sp - 5);
-    goto GOTO__DISPACH;
+    continue;
 
 /*---------------------------------------------------------------------------*/
+case EXIT:
 GOTO__EXIT:
 /*---------------------------------------------------------------------------*/
     uc_i   = 0;
@@ -1020,7 +1025,7 @@ GOTO__EXIT:
         }
     }
 /*---------------------------------------------------------------------------*/
-GOTO__TRY:
+case TRY:
 /*---------------------------------------------------------------------------*/
     if (*env->pc++) {
         us_len = *((ss_int*) env->pc);
@@ -1035,46 +1040,18 @@ GOTO__TRY:
     else
         dyn_list_popi(&env->exceptions, 2);
 
-    goto GOTO__DISPACH;
+    continue;
 /*---------------------------------------------------------------------------*/
-GOTO__REF:
+case REF:
 /*---------------------------------------------------------------------------*/
     if (DYN_IS_REFERENCE(DYN_LIST_GET_END(&env->stack)))
         DYN_TYPE(DYN_LIST_GET_END(&env->stack)) = REFERENCE2;
     else
         env->status = VM_ERROR;
-    goto GOTO__DISPACH;
-/*---------------------------------------------------------------------------*/
-GOTO__EXEC_PROC:
-/*---------------------------------------------------------------------------*/
-    dyn_list_push(&env->stack, &none);
-    if (dyc_ptr2)
-        dyn_set_extern(DYN_LIST_GET_END(&env->stack), dyc_ptr2);
+    continue;
+}
 
-    dyn_set_bool(&tmp, pop);
-    dyn_list_push(&env->stack, &tmp);
-    pop = 0;
-    dyn_set_int(&tmp, env->dp);
-    dyn_list_push(&env->stack, &tmp);
-    //env->pc+=1;
-    dyn_set_extern(&tmp, (void*)env->pc);
-    dyn_list_push(&env->stack, &tmp);
-    env->pc = dyn_fct_get_ss(dyc_ptr);
-
-    env->dp = DYN_LIST_LEN(&env->data);
-
-    us_len = (ss_ushort)*env->pc;
-    env->new_scope = 0;
-
-    // init data
-    env->pc+=2;
-    for (uc_i=0; uc_i<us_len; ++uc_i) {
-        dyn_set_string(&tmp, env->pc);
-        dyn_list_push(&env->data, &tmp);
-        env->pc += ss_strlen(env->pc) + 1;
-    }
-
-    goto GOTO__DISPACH;
+}while(1);
 /*---------------------------------------------------------------------------*/
 GOTO__FINISH:
 /*---------------------------------------------------------------------------*/
@@ -1265,6 +1242,10 @@ void  vm_printf (ss_str str, ss_char newline)
     for (; *str!='\0'; putc(*str++, stderr));
     if (newline)
         putc('\n', stderr);
+    //if (newline)
+    //    Serial.println(str);
+    //else
+    //    Serial.print(str);
 }
 
 
