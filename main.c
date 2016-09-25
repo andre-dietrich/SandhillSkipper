@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
     vm_env *env = vm_init(25, 10, -1);
 
     char program [] = {
-        #include "test.c"
+        #include "test.c "
     };
     vm_execute(env, program, 1);
     vm_printf("--------------------",1);
