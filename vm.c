@@ -995,20 +995,22 @@ GOTO__EXIT:
         }
     }
 /*---------------------------------------------------------------------------*/
-case TRY:
+case TRY_1:
 /*---------------------------------------------------------------------------*/
-    if (*env->pc++) {
-        us_len = *((ss_int*) env->pc);
-        env->pc += 2;
+    us_len = *((ss_int*) env->pc);
+    env->pc += 2;
 
-        dyn_set_int(&tmp, env->sp);
-        dyn_list_push(&env->exceptions, &tmp);
+    dyn_set_int(&tmp, env->sp);
+    dyn_list_push(&env->exceptions, &tmp);
 
-        dyn_set_extern(&tmp, env->pc + us_len);
-        dyn_list_push(&env->exceptions, &tmp);
-    }
-    else
-        dyn_list_popi(&env->exceptions, 2);
+    dyn_set_extern(&tmp, env->pc + us_len);
+    dyn_list_push(&env->exceptions, &tmp);
+    
+    continue;
+/*---------------------------------------------------------------------------*/
+case TRY_0:
+/*---------------------------------------------------------------------------*/
+    dyn_list_popi(&env->exceptions, 2);
 
     continue;
 /*---------------------------------------------------------------------------*/

@@ -3,7 +3,7 @@ CXX    = g++
 RM	   = rm
 ECHO	 = echo
 
-DEFINES= -DS2_DEBUG -DS2_LIST -DS2_SET
+DEFINES= -DS2_LIST -DS2_SET -DS2_DEBUG
 
 CFLAGS = -Wall -g -I./dynamic $(DEFINES) #-Os
 OBJLIB = lib2s.so

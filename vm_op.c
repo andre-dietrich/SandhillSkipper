@@ -120,34 +120,34 @@ GOTO_NRM:       status = dyn_op_ne(rslt, op);
 ss_char vm_op_dispatch (dyn_c *rslt, dyn_c op[], ss_byte len, ss_byte op_id)
 {
     switch (op_id) {
-        case ADD:       return op_binary(rslt, op, len, &dyn_op_add, 0);
-        case SUB:       return op_binary(rslt, op, len, &dyn_op_sub, 0);
-        case MUL:       return op_binary(rslt, op, len, &dyn_op_mul, 0);
-        case DIV:       return op_binary(rslt, op, len, &dyn_op_div, 0);
-        case MOD:       return op_binary(rslt, op, len, &dyn_op_mod, 0);
-        case POW:       return op_binary(rslt, op, len, &dyn_op_pow, 0);
-        case B_AND:     return op_binary(rslt, op, len, &dyn_op_b_and, 0);
-        case B_OR:      return op_binary(rslt, op, len, &dyn_op_b_or,  0);
-        case B_XOR:     return op_binary(rslt, op, len, &dyn_op_b_xor, 0);
-        case B_SHIFT_R: return op_binary(rslt, op, len, &dyn_op_b_shift_r, 0);
-        case B_SHIFT_L: return op_binary(rslt, op, len, &dyn_op_b_shift_l, 0);
+        case ADD:   return op_binary(rslt, op, len, &dyn_op_add, 0);
+        case SUB:   return op_binary(rslt, op, len, &dyn_op_sub, 0);
+        case MUL:   return op_binary(rslt, op, len, &dyn_op_mul, 0);
+        case DIV:   return op_binary(rslt, op, len, &dyn_op_div, 0);
+        case MOD:   return op_binary(rslt, op, len, &dyn_op_mod, 0);
+        case POW:   return op_binary(rslt, op, len, &dyn_op_pow, 0);
+        case B_AND: return op_binary(rslt, op, len, &dyn_op_b_and, 0);
+        case B_OR:  return op_binary(rslt, op, len, &dyn_op_b_or,  0);
+        case B_XOR: return op_binary(rslt, op, len, &dyn_op_b_xor, 0);
+        case LEFT:  return op_binary(rslt, op, len, &dyn_op_b_shift_l, 0);
+        case RIGHT: return op_binary(rslt, op, len, &dyn_op_b_shift_r, 0);
 
-        case AND:       return op_binary(rslt, op, len, &dyn_op_and, 1);
-        case OR:        return op_binary(rslt, op, len, &dyn_op_or,  2);
-        case XOR:       return op_binary(rslt, op, len, &dyn_op_xor, 3);
+        case AND:   return op_binary(rslt, op, len, &dyn_op_and, 1);
+        case OR:    return op_binary(rslt, op, len, &dyn_op_or,  2);
+        case XOR:   return op_binary(rslt, op, len, &dyn_op_xor, 3);
 
-        case LE:        return op_binary2(rslt, op, len, &dyn_op_le);
-        case LT:        return op_binary2(rslt, op, len, &dyn_op_lt);
-        case GT:        return op_binary2(rslt, op, len, &dyn_op_gt);
-        case GE:        return op_binary2(rslt, op, len, &dyn_op_ge);
-        case EQ:        return op_binary2(rslt, op, len, &dyn_op_eq);
+        case LE:    return op_binary2(rslt, op, len, &dyn_op_le);
+        case LT:    return op_binary2(rslt, op, len, &dyn_op_lt);
+        case GT:    return op_binary2(rslt, op, len, &dyn_op_gt);
+        case GE:    return op_binary2(rslt, op, len, &dyn_op_ge);
+        case EQ:    return op_binary2(rslt, op, len, &dyn_op_eq);
 
-        case NE:        return op_NE(rslt, op, len);
-        case IN:        return op_IN(rslt, op, len);
+        case NE:    return op_NE(rslt, op, len);
+        case IN:    return op_IN(rslt, op, len);
 
-        case NOT:       return op_unary (rslt, op, &dyn_op_not);
-        case NEG:       return op_unary (rslt, op, &dyn_op_neg);
-        case B_NOT:     return op_unary (rslt, op, &dyn_op_b_not);
+        case NOT:   return op_unary (rslt, op, &dyn_op_not);
+        case NEG:   return op_unary (rslt, op, &dyn_op_neg);
+        case B_NOT: return op_unary (rslt, op, &dyn_op_b_not);
 
         case EX: {
             if (DYN_IS_REFERENCE(op)) {

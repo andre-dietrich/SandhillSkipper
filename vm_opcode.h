@@ -68,12 +68,14 @@
 
 #define EXIT        39
 
-#define TRY         40
+#define TRY_1       40
+#define TRY_0       41
 
-#define REF         41
+#define REF         42
 
 #define POP         0b10000000
 #define POP_I       0b01111111
+#define P           POP
 
 
 #define NOT    0
@@ -104,8 +106,8 @@
 #define B_AND 19
 #define B_OR  20
 #define B_XOR 21
-#define B_SHIFT_L 22
-#define B_SHIFT_R 23
+#define LEFT  22
+#define RIGHT 23
 
 #define EX    24
 

@@ -44,6 +44,7 @@ void vm_trace (vm_env* env, ss_char* code)
                        ss_itoa(&log[ss_strlen(log)], *((ss_ushort*) (env->pc+2)));
                        break;
         case CST_S   :
+        case TRY_1   :
         case JUMP    :
         case FJUMP   : ss_itoa(&log[16], *((ss_short*) (env->pc+1)));
                        break;
@@ -51,7 +52,6 @@ void vm_trace (vm_env* env, ss_char* code)
         case CALL_FCT:
         case CALL_FCTX: ss_itoa(&log[16], *((ss_byte*)(env->pc+1)));
         case IT_AS   :
-        case TRY     :
         case CST_B   : ss_itoa(&log[16], *((ss_char*)(env->pc+1)));
                        break;
         case CST_DCT :

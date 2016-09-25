@@ -55,7 +55,8 @@ static const ss_str opcodes[] = {
   (ss_str)"IT_AS",
 
   (ss_str)"EXIT",
-  (ss_str)"TRY",
+  (ss_str)"TRY_1",
+  (ss_str)"TRY_0",
   (ss_str)"REF"};
 
 static const ss_str operators[] = {
