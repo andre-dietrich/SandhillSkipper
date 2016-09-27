@@ -36,8 +36,8 @@ struct vm {
     dyn_c rslt;                 /**< Result container, that is used to store the
                                      result of the computation, if and only ift he
                                      process is finised. */
-    dyn_c local;                /**< List of dict, used to store the values for the
-                                     evaluation of the loc-pointer.*/
+//    dyn_c local;                /**< List of dict, used to store the values for the
+//                                     evaluation of the loc-pointer.*/
     ss_byte new_scope;
     dyn_c* loc;
 
