@@ -12,6 +12,34 @@
 #define IT_COUNT1   DYN_LIST_GET_REF(&env->stack, env->sp+3)
 #define IT_COUNT2   DYN_LIST_GET_REF(&env->stack, env->sp+4)
 
+#define IF(COND, THEN, ELSE) COND ? THEN : ELSE
+
+dyn_c* find_local(dyn_c* stack, ss_ushort* start, ss_str id)
+{
+    ss_ushort pos = *start;
+    ss_ushort idx = 0;
+    dyn_c* elem   = NULL;
+
+    while (pos) {
+        elem = DYN_LIST_GET_REF(stack, pos-1);
+        if (DYN_NOT_NONE(elem)) {
+            if( !id[0] ) {
+                *start = pos;
+                return DYN_DICT_GET_I_REF(elem, 0);
+            } else {
+                idx = dyn_dict_has_key(elem, id);
+                if(idx--) {
+                    *start = pos;
+                    return DYN_DICT_GET_I_REF(elem, idx);
+                }
+            }
+        }
+        pos = dyn_get_int(DYN_LIST_GET_REF(stack, pos));
+    }
+
+    return NULL;
+}
+
 vm_env* vm_init (ss_ushort memory_size,
                  ss_ushort functions_size,
                  ss_short execution_steps)
@@ -19,9 +47,6 @@ vm_env* vm_init (ss_ushort memory_size,
     vm_env* env = (vm_env*) malloc(sizeof(vm_env));
 
     env->pc = NULL;
-
-    DYN_INIT(&env->exceptions);
-    DYN_SET_LIST(&env->exceptions);
 
     DYN_INIT(&env->stack);
     DYN_SET_LIST(&env->stack);
@@ -136,15 +161,14 @@ GOTO__DISPACH:
     dyn_free(&tmp2);
 
     if (env->status != VM_IDLE) {
-        if (DYN_LIST_LEN(&env->exceptions) > 0){
+        us_i = env->sp;
+        dyc_ptr = find_local(&env->stack, &us_i, "\a");
+        if (dyc_ptr) {
             env->status = VM_IDLE;
-            dyn_list_pop(&env->exceptions, &tmp);
-            env->pc = (char*)dyn_get_extern(&tmp);
-
-            dyn_list_pop(&env->exceptions, &tmp);
-            env->sp = dyn_get_int(&tmp);
-            
-            dyn_list_popi(&env->stack, DYN_LIST_LEN(&env->stack) - env->sp -1);
+            env->sp = us_i;
+            dyn_list_popi(&env->stack, DYN_LIST_LEN(&env->stack) - us_i -1);
+            env->pc = (char*) dyn_get_extern(dyc_ptr);
+            dyn_dict_remove(VM_LOCAL, "\a");
         }
         else
             return env->status;
@@ -287,8 +311,8 @@ GOTO__PUSH_TMP:
 case CST_STR:
 /*---------------------------------------------------------------------------*/
     dyn_list_push(&env->stack, &none);
-    dyn_set_ref( DYN_LIST_GET_REF_END(&env->stack, 1),
-                 DYN_LIST_GET_REF    (&env->data, env->dp+ (ss_byte)*env->pc++));
+    dyn_set_ref( DYN_LIST_GET_END(&env->stack),
+                 DYN_LIST_GET_REF(&env->data, env->dp+ (ss_byte)*env->pc++));
 
     continue;
 
@@ -325,7 +349,7 @@ case CST_SET:
 
     dyn_list_popi(&env->stack, us_len);
     dyn_list_push(&env->stack, &none);
-    dyn_move(&tmp, DYN_LIST_GET_REF_END(&env->stack,1));
+    dyn_move(&tmp, DYN_LIST_GET_END(&env->stack));
 
     continue;
 #endif
@@ -357,22 +381,30 @@ case LOAD:
 
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+(ss_byte)*env->pc++))->data.str;
 
-    us_i = dyn_dict_has_key(&env->memory, cp_str);
-
-    if (us_i) {
-        dyc_ptr = DYN_DICT_GET_I_REF(&env->memory, us_i-1);
-    }
-    else {
-        us_i = dyn_dict_has_key(&env->functions, cp_str);
-        if (us_i)
-            dyc_ptr = DYN_DICT_GET_I_REF(&env->functions, us_i-1);
-        else {
-            env->status = VM_ERROR;
-            continue;
-        }
-    }
-
-    dyn_set_ref(DYN_LIST_GET_END(&env->stack), dyc_ptr);
+    dyc_ptr = IF( (us_i = dyn_dict_has_key(&env->memory, cp_str), us_i),
+                  (DYN_DICT_GET_I_REF(&env->memory, us_i-1)),
+                  IF( (us_i = dyn_dict_has_key(&env->functions, cp_str), us_i),
+                      (DYN_DICT_GET_I_REF(&env->functions, us_i-1)),
+                      NULL));
+    if (dyc_ptr)
+        dyn_set_ref(DYN_LIST_GET_END(&env->stack), dyc_ptr);
+    else
+        env->status = VM_ERROR;
+    // us_i = dyn_dict_has_key(&env->memory, cp_str);
+    //
+    // if (us_i) {
+    //     dyc_ptr = DYN_DICT_GET_I_REF(&env->memory, us_i-1);
+    // }
+    // else {
+    //     us_i = dyn_dict_has_key(&env->functions, cp_str);
+    //     if (us_i)
+    //         dyc_ptr = DYN_DICT_GET_I_REF(&env->functions, us_i-1);
+    //     else {
+    //         env->status = VM_ERROR;
+    //         continue;
+    //     }
+    // }
+    // dyn_set_ref(DYN_LIST_GET_END(&env->stack), dyc_ptr);
 
     continue;
 
@@ -465,13 +497,13 @@ case STORE_LOC:
     dyc_ptr2 = VM_LOCAL;
 
     if (DYN_IS_NONE(dyc_ptr2))
-        dyn_set_dict(dyc_ptr2,1);
+        dyn_set_dict(dyc_ptr2, 1);
 
     us_i = dyn_dict_has_key(dyc_ptr2, cp_str);
 
     if (!us_i) {
         dyn_dict_insert(dyc_ptr2, cp_str, &none);
-        us_i = dyn_length(dyc_ptr2);
+        us_i = DYN_DICT_LEN(dyc_ptr2);
     }
 
     dyc_ptr2 = DYN_DICT_GET_I_REF(dyc_ptr2, --us_i);
@@ -542,7 +574,7 @@ case CALL_FCT:
                 if (DYN_NOT_NONE(&proc->params)) {
                     // todo optimize
                     if (!ss_strcmp(DYN_DICT_GET_I_KEY(&tmp2, 0), (char*) "")) {
-                        if (dyn_length(&proc->params) == uc_len)
+                        if (DYN_DICT_LEN((&proc->params)) == uc_len)
                             dyn_set_ref(DYN_DICT_GET_I_REF(&tmp2, 0),
                                         DYN_LIST_GET_REF(&env->stack, us_i));
                         us_i = 1;
@@ -655,30 +687,15 @@ case LOC:
 /*---------------------------------------------------------------------------*/
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+(ss_byte)*env->pc++))->data.str;
 
+    dyn_list_push(&env->stack, &none);
+
     us_i = env->sp;
 
-    while (us_i--) {
-        dyc_ptr = DYN_LIST_GET_REF(&env->stack, us_i);
-
-        us_i = dyn_get_int(DYN_LIST_GET_REF(&env->stack, us_i+1));
-
-        if (DYN_IS_NONE(dyc_ptr))
-            continue;
-
-        if ( cp_str[0] ) {
-            us_len = dyn_dict_has_key(dyc_ptr, cp_str);
-            if (us_len) {
-                dyc_ptr = DYN_DICT_GET_I_REF(dyc_ptr, --us_len);
-                break;
-            }
-        } else {
-            dyc_ptr = DYN_DICT_GET_I_REF(dyc_ptr, 0);
-            break;
-        }
-    }
-
-    dyn_list_push(&env->stack, &none);
-    dyn_set_ref(DYN_LIST_GET_END(&env->stack), dyc_ptr);
+    dyc_ptr = find_local(&env->stack, &us_i, cp_str);
+    if (dyc_ptr)
+        dyn_set_ref(DYN_LIST_GET_END(&env->stack), dyc_ptr);
+    else
+        env->status = VM_ERROR;
 
     continue;
 /*---------------------------------------------------------------------------*/
@@ -730,9 +747,9 @@ case LOCX:
 /*---------------------------------------------------------------------------*/
 case IT_INIT:
 /*---------------------------------------------------------------------------*/
-    dyc_ptr = DYN_LIST_GET_REF(&env->stack, env->sp+1);
+    dyc_ptr = IT_DATA;
 
-    uc_len = dyn_length(dyc_ptr);
+    uc_len = DYN_DICT_LEN(dyc_ptr);
     dyn_set_dict(&tmp, uc_len);
 
     for (uc_i=0; uc_i<uc_len; ++uc_i)
@@ -999,18 +1016,17 @@ case TRY_1:
 /*---------------------------------------------------------------------------*/
     us_len = *((ss_short*) env->pc);
     env->pc += 2;
-
-    dyn_set_int(&tmp, env->sp);
-    dyn_list_push(&env->exceptions, &tmp);
-
+    dyn_set_dict(VM_LOCAL, 1);
     dyn_set_extern(&tmp, env->pc + us_len);
-    dyn_list_push(&env->exceptions, &tmp);
+
+    dyn_dict_insert(VM_LOCAL, "\a", &tmp);
 
     continue;
 /*---------------------------------------------------------------------------*/
 case TRY_0:
 /*---------------------------------------------------------------------------*/
-    dyn_list_popi(&env->exceptions, 2);
+
+    dyn_dict_remove(VM_LOCAL, "\a");
 
     continue;
 /*---------------------------------------------------------------------------*/
@@ -1040,7 +1056,7 @@ ss_ushort dict_heigth (dyn_c* dyn)
     ss_ushort len = 0;
     ss_ushort max = 0;
     ss_byte i;
-    for ( i=0; i<DYN_DICT_LENGTH(dyn->data.dict); ++i ) {
+    for ( i=0; i<DYN_DICT_LEN(dyn); ++i ) {
         len = dyn_length( DYN_DICT_GET_I_REF(dyn, i) );
         if (len > max)
             max = len;
@@ -1050,7 +1066,7 @@ ss_ushort dict_heigth (dyn_c* dyn)
 
 ss_char vm_get_iterator (dyn_c* iter_rslt, dyn_c* iter_dict, ss_int count)
 {
-    ss_ushort us_len = dyn_length(iter_dict);
+    ss_ushort us_len = DYN_DICT_LEN(iter_dict);
 
     dyn_list* rslt_list = iter_rslt->data.dict->value.data.list;
 
@@ -1079,18 +1095,18 @@ ss_char vm_get_iterator (dyn_c* iter_rslt, dyn_c* iter_dict, ss_int count)
                 ss_short i;
 
                 if (!count) {
-                    dyn_set_dict(&rslt_list->container[us_i], dyn_length(ptr));
+                    dyn_set_dict(&rslt_list->container[us_i], DYN_DICT_LEN(ptr));
 
                     dyn_c none;
                     DYN_INIT(&none);
-                    for (i=0; i<dyn_length(ptr); ++i) {
+                    for (i=0; i<DYN_DICT_LEN(ptr); ++i) {
                         dyn_dict_insert(&rslt_list->container[us_i],
                                          DYN_DICT_GET_I_KEY(ptr, i),
                                          &none);
                     }
                 }
 
-                for (i=0; i<dyn_length(ptr); ++i) {
+                for (i=0; i<DYN_DICT_LEN(ptr); ++i) {
                     dyn_set_ref( DYN_DICT_GET_I_REF(&rslt_list->container[us_i], i),
                                  DYN_LIST_GET_REF(DYN_DICT_GET_I_REF(ptr, i),
                                                   j % dict_heigth(ptr)));
@@ -1125,7 +1141,6 @@ ss_int vm_size (vm_env* env)
     bytes += dyn_size(&env->stack);
     bytes += dyn_size(&env->memory);
     bytes += dyn_size(&env->functions);
-    bytes += dyn_size(&env->exceptions);
     bytes += dyn_size(&env->rslt);
     bytes += dyn_size(&env->data);
     return bytes;
@@ -1135,7 +1150,6 @@ void vm_reset (vm_env* env, ss_char hard)
 {
     DYN_SET_LIST(&env->stack);
     DYN_SET_LIST(&env->data);
-    DYN_SET_LIST(&env->exceptions);
 
     if (hard) {
         dyn_dict_empty(&env->memory);
@@ -1174,7 +1188,7 @@ ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, 
 
     if (dyn_dict_insert(&env->functions, key, &none)) {
         if (dyn_set_fct(DYN_DICT_GET_I_REF(&env->functions,
-                                            dyn_length(&env->functions)-1),
+                                            DYN_DICT_LEN((&env->functions))-1),
                         ptr, sys+1, info))
             return 1;
     }
@@ -1224,7 +1238,6 @@ void vm_free (vm_env* env)
 {
     dyn_free(&env->rslt);
     dyn_list_free(&env->stack);
-    dyn_list_free(&env->exceptions);
     dyn_dict_free(&env->memory);
     dyn_dict_free(&env->functions);
     dyn_list_free(&env->data);
