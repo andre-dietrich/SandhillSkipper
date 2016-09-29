@@ -188,7 +188,7 @@ ss_char vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
             }
         }
     }
-    else if (len == 1) {
+    else {
         dyn_c *fct;
         ss_str fct_name = NULL;
 
@@ -229,7 +229,7 @@ GOTO_FCT:
             goto GOTO_FCT;
         }
     }
-    else
+/*    else
     {
         dyn_set_list_len(rslt, len);
 
@@ -242,7 +242,7 @@ GOTO_FCT:
                          1);
         }
     }
-
+*/
     return VM_OK;
 }
 
@@ -252,8 +252,8 @@ ss_char vm_sys_print (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
     if (len)
         dyn_copy(&params[len-1], rslt);
     else {
-        vm_printf((ss_str)"", 1);
-        return VM_OK;
+        dyn_free(rslt);
+        goto LABEL_OK;
     }
 
     ss_str str = NULL;
@@ -264,6 +264,8 @@ ss_char vm_sys_print (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
         free(str);
         vm_printf((ss_str)" ", 0);
     }
+
+LABEL_OK:
     vm_printf((ss_str)"", 1);
     return VM_OK;
 }

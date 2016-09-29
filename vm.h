@@ -13,6 +13,7 @@
 #define VM_C_H
 
 #include "dynamic.h"
+#include "functional_c.h"
 #include "ss_string.h"
 
 #include "vm_defines.h"
@@ -47,8 +48,10 @@ struct vm {
 
     dyn_c functions;
 
-    ss_char status;
-    ss_short execution_steps;
+    ss_char   status;
+    ss_short  execution_steps;
+    ss_ushort memory_size;
+    ss_ushort stack_size;
 } __attribute__ ((packed));
 typedef struct vm vm_env;
 
@@ -56,8 +59,8 @@ typedef ss_char (*sys) (vm_env*, dyn_c*, dyn_c [], ss_byte);
 
 
 vm_env* vm_init         (ss_ushort memory_size,
-                         ss_ushort functions_size,
-                         ss_short execution_steps);
+                         ss_ushort stack_size,
+                         ss_short  execution_steps);
 ss_char vm_execute      (vm_env* env, ss_char* code, ss_char trace);
 
 void    vm_free         (vm_env* env);
@@ -68,10 +71,10 @@ ss_char vm_ready        (vm_env* env);
 
 ss_int  vm_size         (vm_env* env);
 
-dyn_c*  vm_get_rslt      (vm_env* env);
+dyn_c*  vm_get_rslt     (vm_env* env);
 
 ss_char vm_add_variable (vm_env* env, ss_str key, dyn_c* value);
-dyn_c*  vm_call_variable (vm_env* env, ss_str key);
+dyn_c*  vm_call_variable(vm_env* env, ss_str key);
 
 ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, ss_char sys);
 ss_char vm_call_function(vm_env* env, ss_str key,
