@@ -18,6 +18,12 @@
 #define IT_COUNT1   VM_STACK_REF(env->sp+3)
 #define IT_COUNT2   VM_STACK_REF(env->sp+4)
 
+#ifdef ARDUINO
+#include <Arduino.h>
+#define putc( C, weg) Serial.write(C)
+//#define FreeStatic
+//#include "ArduinoFreeRam.h"
+#endif
 
 dyn_c* find_local(dyn_list* stack, ss_ushort* start, ss_str id)
 {
@@ -44,7 +50,6 @@ dyn_c* find_local(dyn_list* stack, ss_ushort* start, ss_str id)
 
     return NULL;
 }
-
 
 vm_env* vm_init (ss_ushort memory_size,
                  ss_ushort stack_size,
