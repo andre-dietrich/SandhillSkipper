@@ -40,7 +40,7 @@ struct vm {
     dyn_c* loc;
 
     dyn_c data;
-    ss_ushort dp;
+    //ss_ushort dp;
 
     ss_ushort sp;
     ss_char *pc;
@@ -48,7 +48,7 @@ struct vm {
     dyn_c functions;
 
     ss_char   status;
-    ss_short  execution_steps;
+    ss_ushort execution_steps;
     ss_ushort memory_size;
     ss_ushort stack_size;
 } __attribute__ ((packed));
@@ -59,7 +59,7 @@ typedef ss_char (*sys) (vm_env*, dyn_c*, dyn_c [], ss_byte);
 
 vm_env* vm_init         (ss_ushort memory_size,
                          ss_ushort stack_size,
-                         ss_short  execution_steps);
+                         ss_ushort execution_steps);
 ss_char vm_execute      (vm_env* env, ss_char* code, ss_char trace);
 
 void    vm_free         (vm_env* env);
