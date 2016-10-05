@@ -13,7 +13,7 @@
 #define OPCODE_H__
 
 #define RET          0         // unsigned char
-#define RET_L        1                               // 0b000 0001 = remove slices
+#define SP_SAVEX     1                               // 0b000 0001 = remove slices
 #define RET_P        2                        // 0b000 0010 = restore program counter
                                // 0b000 0100 = increase program counter by one
                                // 0b000 1000 = return from loop

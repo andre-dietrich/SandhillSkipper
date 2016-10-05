@@ -37,7 +37,6 @@ struct vm {
     dyn_c rslt;                 /**< Result container, that is used to store the
                                      result of the computation, if and only ift he
                                      process is finised. */
-    ss_byte new_scope;
     dyn_c* loc;
 
     dyn_c data;

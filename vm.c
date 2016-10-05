@@ -97,7 +97,6 @@ vm_env* vm_init (ss_ushort memory_size,
     vm_add_function(env, (ss_str)"insert",(void*)ss_insert,       (ss_str) "", 0);
     vm_add_function(env, (ss_str)"remove",(void*)ss_remove,       (ss_str) "", 0);
 
-    env->new_scope = 1;
     env->loc = NULL;
 
     env->dp = 0;
@@ -118,9 +117,6 @@ ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
     dyn_c tmp, tmp2;
     DYN_INIT(&tmp);
     DYN_INIT(&tmp2);
-
-    dyn_c none;
-    DYN_INIT(&none);
 
     dyn_list*  stack = env->stack.data.list;
     dyn_c* env_stack = &env->stack;
@@ -234,7 +230,7 @@ case RET_P:
         dyn_list_pop(env_stack, &tmp2);
         if (DYN_NOT_NONE(&tmp2)) {
             dyn_move(&tmp, (dyn_c*)dyn_get_extern(&tmp2));
-            dyn_list_push(env_stack, &none);
+            dyn_list_push_none(env_stack);
             dyn_set_ref(VM_STACK_END,
                         (dyn_c*)dyn_get_extern(&tmp2));
         }
@@ -253,11 +249,9 @@ case RET_P:
 /*---------------------------------------------------------------------------*/
 case SP_SAVE:
 /*---------------------------------------------------------------------------*/
-// todo add new sp_save
-    if (env->new_scope)
-        dyn_list_push(env_stack, &none);
-    else
-        env->new_scope = 1;
+    dyn_list_push_none(env_stack);
+
+case SP_SAVEX:
 
     dyn_set_int(&tmp, env->sp);
     dyn_list_push(env_stack, &tmp);
@@ -267,7 +261,7 @@ case SP_SAVE:
 /*---------------------------------------------------------------------------*/
 case CST_N:
 /*---------------------------------------------------------------------------*/
-    dyn_list_push(env_stack, &none);
+    dyn_list_push_none(env_stack);
     continue;
 
 /*---------------------------------------------------------------------------*/
@@ -317,7 +311,7 @@ GOTO__PUSH_TMP:
 /*---------------------------------------------------------------------------*/
 case CST_STR:
 /*---------------------------------------------------------------------------*/
-    dyn_list_push(env_stack, &none);
+    dyn_list_push_none(env_stack);
     dyn_set_ref( VM_STACK_END,
                  DYN_LIST_GET_REF(&env->data, env->dp+ (ss_byte)*env->pc++));
 
@@ -331,14 +325,14 @@ case CST_LST:
     dyn_set_list_len(&tmp, us_len);
 
     for(us_i=0; us_i<us_len; ++us_i) {
-        dyn_list_push(&tmp, &none);
+        dyn_list_push_none(&tmp);
 
         dyn_move(dyn_list_get_ref(env_stack, -us_len+us_i),
                  DYN_LIST_GET_REF(&tmp, us_i));
     }
 
     dyn_list_popi(env_stack, us_len);
-    dyn_list_push(env_stack, &none);
+    dyn_list_push_none(env_stack);
     dyn_move(&tmp, VM_STACK_END);
 
     continue;
@@ -355,7 +349,7 @@ case CST_SET:
         dyn_set_insert(&tmp, dyn_list_get_ref(env_stack, -us_len+us_i));
 
     dyn_list_popi(env_stack, us_len);
-    dyn_list_push(env_stack, &none);
+    dyn_list_push_none(env_stack);
     dyn_move(&tmp, VM_STACK_END);
 
     continue;
@@ -366,16 +360,16 @@ case CST_DCT:
     uc_len = *((ss_byte*) env->pc++);
 
     dyn_set_dict(&tmp, uc_len);
-
+    dyn_set_none(&tmp2);
     for (uc_i=uc_len; uc_i; --uc_i) {
         cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+(ss_byte)*env->pc++))->data.str;
 
-        dyn_dict_insert(&tmp, cp_str, &none);
+        dyn_dict_insert(&tmp, cp_str, &tmp2);
 
         dyn_move(VM_STACK_REF_END(uc_i), dyn_dict_get(&tmp, cp_str));
     }
     dyn_list_popi(env_stack, uc_len);
-    dyn_list_push(env_stack, &none);
+    dyn_list_push_none(env_stack);
     dyn_move(&tmp, VM_STACK_END);
 
     continue;
@@ -383,7 +377,7 @@ case CST_DCT:
 /*---------------------------------------------------------------------------*/
 case LOAD:
 /*---------------------------------------------------------------------------*/
-    dyn_list_push(env_stack, &none);
+    dyn_list_push_none(env_stack);
 
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+(ss_byte)*env->pc++))->data.str;
 
@@ -440,8 +434,10 @@ case ELEM:
                         }
                         break;
         case DICT:      cp_str = dyn_get_string( VM_STACK_END );
-                        if (!dyn_dict_has_key(dyc_ptr, cp_str))
-                            dyn_dict_insert(dyc_ptr, cp_str, &none);
+                        if (!dyn_dict_has_key(dyc_ptr, cp_str)) {
+                            dyn_set_none(&tmp);
+                            dyn_dict_insert(dyc_ptr, cp_str, &tmp);
+                        }
                         dyc_ptr = dyn_dict_get(dyc_ptr, cp_str);
                         free(cp_str);
                         break;
@@ -470,7 +466,8 @@ case STORE:
 /*---------------------------------------------------------------------------*/
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+ (ss_byte)*env->pc++))->data.str;
 
-    dyn_dict_insert(&env->memory, cp_str, &none);
+    dyn_set_none(&tmp);
+    dyn_dict_insert(&env->memory, cp_str, &tmp);
 
     dyc_ptr = dyn_dict_get(&env->memory, cp_str);
 
@@ -509,7 +506,8 @@ case STORE_LOC:
         if (DYN_IS_NONE(VM_LOCAL))
             dyn_set_dict(VM_LOCAL, 1);
 
-        dyn_dict_insert(VM_LOCAL, cp_str, &none);
+        dyn_set_none(&tmp);
+        dyn_dict_insert(VM_LOCAL, cp_str, &tmp);
         dyc_ptr2 = DYN_DICT_GET_I_REF(VM_LOCAL, dyn_length(VM_LOCAL)-1);
     }
 
@@ -594,7 +592,7 @@ case CALL_FCT:
 
                 dyn_list_popi(env_stack, uc_len+1);
 
-                dyn_list_push(env_stack, &none);
+                dyn_list_push_none(env_stack);
                 if (dyc_ptr2)
                     dyn_set_extern(VM_STACK_END, dyc_ptr2);
 
@@ -611,9 +609,8 @@ case CALL_FCT:
                 env->dp = DYN_LIST_LEN(&env->data);
 
                 us_len = (ss_ushort)*env->pc;
-                env->new_scope = 0;
 
-                dyn_list_push(env_stack, &none);
+                dyn_list_push_none(env_stack);
                 dyn_move(&tmp2, VM_STACK_END);
 
                 // init data
@@ -692,7 +689,7 @@ case LOC:
 /*---------------------------------------------------------------------------*/
     cp_str = (DYN_LIST_GET_REF(&env->data, env->dp+(ss_byte)*env->pc++))->data.str;
 
-    dyn_list_push(env_stack, &none);
+    dyn_list_push_none(env_stack);
 
     us_i = env->sp;
 
@@ -756,9 +753,9 @@ case IT_INIT:
 
     uc_len = DYN_DICT_LEN(dyc_ptr);
     dyn_set_dict(&tmp, uc_len);
-
+    dyn_set_none(&tmp2);
     for (uc_i=0; uc_i<uc_len; ++uc_i)
-        dyn_dict_insert(&tmp, dyc_ptr->data.dict->key[uc_i], &none);
+        dyn_dict_insert(&tmp, dyc_ptr->data.dict->key[uc_i], &tmp2);
 
     dyn_move(&tmp, VM_LOCAL);
 
@@ -866,7 +863,8 @@ case IT_GROUP:
     us_i    = dyn_dict_has_key(dyc_ptr, cp_str);
 
     if (!us_i) {
-        dyn_dict_insert(dyc_ptr, cp_str, &none);
+        dyn_set_none(&tmp);
+        dyn_dict_insert(dyc_ptr, cp_str, &tmp);
         us_i = dyn_dict_has_key(dyc_ptr, cp_str);
 
         if (DYN_TYPE(VM_STACK_REF(env->sp+5)) == DICT) {
@@ -886,14 +884,14 @@ case IT_GROUP:
     dyc_ptr = DYN_DICT_GET_I_REF(dyc_ptr, us_i-1);
     if(DYN_TYPE(dyc_ptr) == LIST) {
         for (uc_i=0; uc_i<uc_len; ++uc_i) {
-            dyn_list_push(dyc_ptr, &none);
+            dyn_list_push_none(dyc_ptr);
             dyn_move(DYN_LIST_GET_REF(VM_STACK_REF(env->sp+5), us_len*uc_len+uc_i),
                      DYN_LIST_GET_END(dyc_ptr));
         }
     }
     else {
         for (uc_i=0; uc_i<uc_len; ++uc_i) {
-            dyn_list_push(DYN_DICT_GET_I_REF(dyc_ptr, uc_i), &none);
+            dyn_list_push_none(DYN_DICT_GET_I_REF(dyc_ptr, uc_i));
 
             dyn_move( DYN_LIST_GET_REF(DYN_DICT_GET_I_REF(VM_STACK_REF(env->sp+5), uc_i), us_len),
                       DYN_LIST_GET_END(DYN_DICT_GET_I_REF(dyc_ptr, uc_i)));

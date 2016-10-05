@@ -5,7 +5,7 @@
 
 static const ss_str opcodes[] = {
   (ss_str)"RET",
-  (ss_str)"RET_L",
+  (ss_str)"SP_SAVEX",
   (ss_str)"RET_P",
   (ss_str)"SP_SAVE",
 
