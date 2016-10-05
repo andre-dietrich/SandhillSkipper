@@ -133,8 +133,6 @@ ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
     ss_uint   i_j     = 0;
 
     ss_byte   pop     = 0;
-    ss_byte   _exit_  = 0;
-
 
     if(env->status == VM_OK){
         env->pc = code;
@@ -165,10 +163,6 @@ ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
 //DISPACH:
 /*---------------------------------------------------------------------------*/
 do{
-/*---------------------------------------------------------------------------*/
-//Exit jumps here
-GOTO__DISPACH:
-/*---------------------------------------------------------------------------*/
     dyn_free(&tmp);
     dyn_free(&tmp2);
 
@@ -214,8 +208,6 @@ GOTO__DISPACH:
 switch((ss_byte)(POP_I & *env->pc++)){
 /*---------------------------------------------------------------------------*/
 case RET:
-GOTO__RET:
-case RET_L:
 case RET_P:
 /*---------------------------------------------------------------------------*/
 
@@ -246,9 +238,6 @@ case RET_P:
 
         continue;
     }
-
-    if (_exit_)
-        goto GOTO__EXIT;
 
     if(!env->sp)
         goto GOTO__FINISH;
@@ -506,19 +495,18 @@ case STORE_LOC:
                                env->dp+ (ss_byte)*env->pc++))->data.str;
 
     dyc_ptr  = VM_STACK_END;
-    dyc_ptr2 = VM_LOCAL;
+    //dyc_ptr2 = VM_LOCAL;
+    us_i = env->sp;
 
-    if (DYN_IS_NONE(dyc_ptr2))
-        dyn_set_dict(dyc_ptr2, 1);
+    dyc_ptr2 = find_local(stack, &us_i, cp_str);
 
-    us_i = dyn_dict_has_key(dyc_ptr2, cp_str);
+    if (!dyc_ptr2) {
+        if (DYN_IS_NONE(VM_LOCAL))
+            dyn_set_dict(VM_LOCAL, 1);
 
-    if (!us_i) {
-        dyn_dict_insert(dyc_ptr2, cp_str, &none);
-        us_i = DYN_DICT_LEN(dyc_ptr2);
+        dyn_dict_insert(VM_LOCAL, cp_str, &none);
+        dyc_ptr2 = DYN_DICT_GET_I_REF(VM_LOCAL, dyn_length(VM_LOCAL)-1);
     }
-
-    dyc_ptr2 = DYN_DICT_GET_I_REF(dyc_ptr2, --us_i);
 
     dyn_move(dyc_ptr, DYN_IS_REFERENCE(dyc_ptr2) ? dyc_ptr2->data.ref : dyc_ptr2);
 
@@ -979,55 +967,21 @@ case IT_AS:
 
 /*---------------------------------------------------------------------------*/
 case EXIT:
-GOTO__EXIT:
 /*---------------------------------------------------------------------------*/
-    uc_i   = 0;
-    _exit_ = 1;
-    //++env->pc;
-    while (1) {
-        switch (*env->pc++ & POP_I) {
-            case SP_SAVE  : ++uc_i;
-                            break;
-            case CALL_FCT :
-            case CST_B    :
-            case CST_STR  :
-            case IT_AS    :
-            case LOAD     :
-            case STORE    :
-            case STORE_LOC:
-            case LOC      : env->pc++;
-                            break;
-            case CALL_OP  :
-            case CST_LST  :
-            case CST_S    :
-            case CST_SET  :
-            case JUMP     :
-            case FJUMP    : env->pc += 2;
-                            break;
-            case CST_I    :
-            case CST_F    : env->pc += 4;
-                            break;
-            case CST_DCT  : env->pc += *env->pc * 2 + 1;
-                            break;
-            case PROC     : //env->pc += *env->pc * 2;  // parameter count
-                            //env->pc += *((ss_ushort*) env->pc)*; // bytecode length
-                            //env->pc++;
-                            break;
-            case RET      :
-            case RET_P    : if ( !uc_i )
-                                goto GOTO__RET;
-                            else
-                                --uc_i;
-                            break;
-            case RET_L    : if ( !uc_i ) {
-                                //dyn_list_push(env_stack, &none);
-                                pop = 0;
-                                _exit_ = 0;
-                                --env->pc;
-                                goto GOTO__DISPACH;
-                            }
-        }
+    uc_len = (ss_byte)*env->pc++;
+    dyn_list_pop(env_stack, &tmp);
+
+    while(uc_len--) {
+        us_len = dyn_get_int(VM_STACK_REF(env->sp));
+
+        dyn_list_popi(env_stack, VM_STACK_LEN - env->sp + 1);
+
+        env->sp = us_len;
     }
+
+    dyn_list_push(env_stack, &tmp);
+    continue;
+
 /*---------------------------------------------------------------------------*/
 case TRY_1:
 /*---------------------------------------------------------------------------*/
