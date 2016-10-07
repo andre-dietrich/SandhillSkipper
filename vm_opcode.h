@@ -72,6 +72,7 @@
 #define TRY_0       41
 
 #define REF         42
+#define REC_SET     43
 
 #define POP         0b10000000
 #define POP_I       0b01111111
