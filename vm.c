@@ -57,28 +57,6 @@ dyn_c* find_local(dyn_list* stack, ss_ushort* start, ss_str id)
     return NULL;
 }
 
-char* add_data(dyn_c* data, char* code)
-{
-    char *pc = code;
-    ss_ushort len = (ss_ushort)* pc;
-    pc+=2;
-
-    dyn_c str;
-    DYN_INIT(&str);
-
-    data = dyn_list_push_none(data);
-    dyn_set_list_len(data, len);
-
-    while(len--) {
-        dyn_set_string(&str, pc);
-        dyn_list_push(data, &str);
-        pc += ss_strlen(pc) + 1;
-    }
-    dyn_free(&str);
-
-    return pc;
-}
-
 vm_env* vm_init (ss_ushort memory_size,
                  ss_ushort stack_size,
                  ss_ushort execution_steps)
@@ -161,15 +139,14 @@ ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
 
     ss_byte   pop     = 0;
 
+    dyn_c* data = NULL;
     if(env->status == VM_OK){
         env->sp = 0;
         env->status = VM_IDLE;
-
-        // init data
-        env->pc = add_data(&env->data, code);
-    }
-
-    dyn_c* data = (DYN_LIST_GET_END(&env->data))->data.list->container;
+        env->pc = code;
+        dyn_list_push_none(env_stack);
+    } else
+        data = (DYN_LIST_GET_END(&env->data))->data.list->container;
 
     ss_short execution_steps = env->execution_steps;
 
@@ -250,13 +227,29 @@ case RET_P:
 
     continue;
 /*---------------------------------------------------------------------------*/
+case SP_SAVEX:
+/*---------------------------------------------------------------------------*/
+    // init data
+    us_len = (ss_ushort)*env->pc;
+    env->pc+=2;
+
+    dyc_ptr = dyn_list_push_none(&env->data);
+    dyn_set_list_len(dyc_ptr, us_len);
+
+    while(us_len--) {
+        dyn_set_string(&tmp, env->pc);
+        dyn_list_push(dyc_ptr, &tmp);
+        env->pc += ss_strlen(env->pc) + 1;
+    }
+    data = dyc_ptr->data.list->container;
+
+    goto LABEL_SP;
+/*---------------------------------------------------------------------------*/
 case SP_SAVE:
 /*---------------------------------------------------------------------------*/
-
     dyn_list_push_none(env_stack);
 
-case SP_SAVEX:
-
+LABEL_SP:
     dyn_set_int(&tmp, env->sp);
     dyn_list_push(env_stack, &tmp);
     env->sp = VM_STACK_LEN-1;
@@ -362,10 +355,10 @@ case CST_DCT:
     dyn_set_dict(&tmp, uc_len);
 
     for (uc_i=uc_len; uc_i; --uc_i) {
-        cp_str = VM_DATA((ss_byte)*env->pc++);
+        //cp_str = VM_DATA((ss_byte)*env->pc++);
 
         dyn_move(VM_STACK_REF_END(uc_i),
-                 dyn_dict_insert(&tmp, cp_str, &tmp2));
+                 dyn_dict_insert(&tmp, VM_DATA((ss_byte)*env->pc++), &tmp2));
     }
     dyn_list_popi(env_stack, uc_len);
     dyn_move(&tmp, dyn_list_push_none(env_stack));
@@ -573,9 +566,6 @@ case CALL_FCT:
 
                 dyn_move(&tmp2, dyn_list_push_none(env_stack));
 
-                // init data
-                env->pc = add_data(&env->data, env->pc);
-                data = (DYN_LIST_GET_END(&env->data))->data.list->container;
                 continue;
 
             }
@@ -787,19 +777,10 @@ case IT_LIMIT:
 /*---------------------------------------------------------------------------*/
     dyc_ptr = VM_STACK_END;
 
-    dyn_set_bool(dyc_ptr, IF( (dyn_get_int(dyc_ptr) > DYN_LIST_LEN(IT_LIST)),
-                              DYN_TRUE,
-                              ( dyn_set_int(IT_COUNT1, 0),
-                                DYN_FALSE) ));
+    dyn_set_bool(dyc_ptr, (dyn_get_int(dyc_ptr) > DYN_LIST_LEN(IT_LIST))
+                          ? DYN_TRUE
+                          : ( dyn_set_int(IT_COUNT1, 0), DYN_FALSE) );
 
-/*    if (dyn_get_int(dyc_ptr) > DYN_LIST_LEN(IT_LIST)) {
-        dyn_set_bool(dyc_ptr, DYN_TRUE);
-    }
-    else {
-        dyn_set_bool(dyc_ptr, DYN_FALSE);
-        dyn_set_int(IT_COUNT1, 0);
-    }
-*/
     continue;
 
 /*---------------------------------------------------------------------------*/

@@ -13,7 +13,6 @@
 #define VM_C_H
 
 #include "dynamic.h"
-#include "functional_c.h"
 #include "ss_string.h"
 
 #include "vm_defines.h"
