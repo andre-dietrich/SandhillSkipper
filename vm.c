@@ -917,9 +917,11 @@ case REF:
 /*---------------------------------------------------------------------------*/
 default:
 /*---------------------------------------------------------------------------*/
-    uc_i = *(env->pc-1) & OP_I;
+    us_i = uc_i & OP_I;
+
     uc_len = 1+(ss_byte)*env->pc++;
-    if ((*(env->pc-2) & OPX) == OPX) {
+
+    if ((uc_i & OPX) == OPX) {
         dyc_ptr = (VM_STACK_REF_END(uc_len))->data.ref;
         dyn_move(dyc_ptr, VM_STACK_REF_END(uc_len));
     }
@@ -927,7 +929,7 @@ default:
     uc_i = vm_op_dispatch(&tmp,
                           VM_STACK_REF_END(uc_len),
                           uc_len,
-                          uc_i);
+                          us_i);
 
     dyn_list_popi(env_stack, uc_len-1);
 
@@ -952,8 +954,8 @@ default:
 /*---------------------------------------------------------------------------*/
 GOTO__FINISH:
 /*---------------------------------------------------------------------------*/
-    dyn_copy(&tmp, &env->rslt);
-    dyn_free(&tmp);
+    dyn_move(&tmp, &env->rslt);
+    //dyn_free(&tmp);
     dyn_free(&tmp2);
     vm_reset(env, 0);
 
