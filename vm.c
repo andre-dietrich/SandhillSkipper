@@ -270,22 +270,21 @@ case CST_1:
 
 /*---------------------------------------------------------------------------*/
 case CST_B:
-/*---------------------------------------------------------------------------*/
-    dyn_set_int(&tmp, (ss_int)*(env->pc++));
-    goto GOTO__PUSH_TMP;
-
-/*---------------------------------------------------------------------------*/
 case CST_S:
-/*---------------------------------------------------------------------------*/
-    dyn_set_int(&tmp, *((ss_short*) env->pc));
-    env->pc += 2;
-    goto GOTO__PUSH_TMP;
-
-/*---------------------------------------------------------------------------*/
 case CST_I:
 /*---------------------------------------------------------------------------*/
-    dyn_set_int(&tmp, *((ss_int*) env->pc));
-    env->pc+=4;
+    dyn_set_int(&tmp, uc_i == CST_B
+                      ? *((ss_char*) env->pc)
+                      : ( uc_i == CST_S
+                          ? *((ss_short*) env->pc )
+                          : *((ss_int*) env->pc)));
+
+    env->pc += uc_i == CST_B
+               ? 1
+               : ( uc_i == CST_S
+                   ? 2
+                   : 4 );
+
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
@@ -313,6 +312,7 @@ case CST_LST:
 /*---------------------------------------------------------------------------*/
     us_len = *((ss_ushort*) env->pc);
     env->pc+=2;
+
     dyn_set_list_len(&tmp, us_len);
 
     for(us_i=0; us_i<us_len; ++us_i) {
@@ -341,6 +341,7 @@ case CST_SET:
     dyn_move(&tmp, dyn_list_push_none(env_stack));
 
     continue;
+
 #endif
 /*---------------------------------------------------------------------------*/
 case CST_DCT:
@@ -350,11 +351,10 @@ case CST_DCT:
     dyn_set_dict(&tmp, uc_len);
 
     for (uc_i=uc_len; uc_i; --uc_i) {
-        //cp_str = VM_DATA((ss_byte)*env->pc++);
-
         dyn_move(VM_STACK_REF_END(uc_i),
                  dyn_dict_insert(&tmp, VM_DATA((ss_byte)*env->pc++), &tmp2));
     }
+
     dyn_list_popi(env_stack, uc_len);
     dyn_move(&tmp, dyn_list_push_none(env_stack));
 
@@ -370,8 +370,6 @@ case LOAD:
 
     if(!dyc_ptr)
         dyc_ptr = dyn_dict_get(&env->functions, cp_str);
-
-    //vm_printf(dyn_get_string(dyc_ptr), 1);
 
     if (dyc_ptr)
         dyn_set_ref(dyn_list_push_none(env_stack), dyc_ptr);
