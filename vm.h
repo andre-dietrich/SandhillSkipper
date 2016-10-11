@@ -38,7 +38,7 @@ struct vm {
                                      process is finised. */
     dyn_c* loc;
 
-    dyn_c data;
+    char* data;
     //ss_ushort dp;
 
     ss_ushort sp;

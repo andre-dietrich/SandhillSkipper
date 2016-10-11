@@ -14,7 +14,7 @@
 
 #define VM_TRY              "\a"
 
-#define VM_DATA(X)          (&data[X])->data.str
+#define VM_DATA(X)          get_data(env->data, X)
 
 #define VM_LOCAL            VM_STACK_REF(env->sp-1)
 #define IT_DATA             VM_STACK_REF(env->sp+1)
@@ -55,6 +55,15 @@ dyn_c* find_local(dyn_list* stack, ss_ushort* start, ss_str id)
     }
 
     return NULL;
+}
+
+char * get_data(char* base, ss_byte i)
+{
+    char * ptr = base;
+    while (i--) {
+        ptr += (ss_byte)* ptr;
+    }
+    return ++ptr;
 }
 
 vm_env* vm_init (ss_ushort memory_size,
@@ -104,9 +113,7 @@ vm_env* vm_init (ss_ushort memory_size,
     vm_add_function(env, (ss_str)"remove",(void*)ss_remove,       (ss_str) "", 0);
 
     env->loc = NULL;
-
-    DYN_INIT(&env->data);
-    dyn_set_list_len(&env->data, 1);
+    env->data = NULL;
 
     env->status = VM_OK;
     env->execution_steps = execution_steps ? ++execution_steps : 0;
@@ -139,14 +146,12 @@ ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
 
     ss_byte   pop     = 0;
 
-    dyn_c* data = NULL;
     if(env->status == VM_OK){
         env->sp = 0;
         env->status = VM_IDLE;
         env->pc = code;
         dyn_list_push_none(env_stack);
-    } else
-        data = (DYN_LIST_GET_END(&env->data))->data.list->container;
+    }
 
     ss_short execution_steps = env->execution_steps;
 
@@ -207,9 +212,8 @@ case RET_P:
     if (*(env->pc-1) == RET_P) {
         dyn_list_pop(env_stack, &tmp2);
         env->pc = (ss_char*)dyn_get_extern(&tmp2);
-        dyn_list_popi(&env->data, 1);
-        //dyn_list_resize()
-        data = (DYN_LIST_GET_END(&env->data))->data.list->container;
+        dyn_list_pop(env_stack, &tmp2);
+        env->data = (ss_char*)dyn_get_extern(&tmp2);
         dyn_list_pop(env_stack, &tmp2);
         pop = dyn_get_bool(&tmp2);
         dyn_list_pop(env_stack, &tmp2);
@@ -230,18 +234,13 @@ case RET_P:
 case SP_SAVEX:
 /*---------------------------------------------------------------------------*/
     // init data
-    us_len = (ss_ushort)*env->pc;
-    env->pc+=2;
+    uc_len = (ss_byte)*env->pc++;
 
-    dyc_ptr = dyn_list_push_none(&env->data);
-    dyn_set_list_len(dyc_ptr, us_len);
+    env->data = env->pc;
 
-    while(us_len--) {
-        dyn_set_string(&tmp, env->pc);
-        dyn_list_push(dyc_ptr, &tmp);
-        env->pc += ss_strlen(env->pc) + 1;
+    while(uc_len--) {
+        env->pc += (ss_byte)*env->pc;
     }
-    data = dyc_ptr->data.list->container;
 
     goto LABEL_SP;
 /*---------------------------------------------------------------------------*/
@@ -308,8 +307,8 @@ GOTO__PUSH_TMP:
 /*---------------------------------------------------------------------------*/
 case CST_STR:
 /*---------------------------------------------------------------------------*/
-    dyn_set_ref( dyn_list_push_none(env_stack),
-                 &data[(ss_byte)*env->pc++]);
+    dyn_set_string( dyn_list_push_none(env_stack),
+                    VM_DATA((ss_byte)*env->pc++));
 
     continue;
 
@@ -375,6 +374,8 @@ case LOAD:
 
     if(!dyc_ptr)
         dyc_ptr = dyn_dict_get(&env->functions, cp_str);
+
+    //vm_printf(dyn_get_string(dyc_ptr), 1);
 
     if (dyc_ptr)
         dyn_set_ref(dyn_list_push_none(env_stack), dyc_ptr);
@@ -556,12 +557,12 @@ case CALL_FCT:
                 if (dyc_ptr2)
                     dyn_set_extern(VM_STACK_END, dyc_ptr2);
 
-                dyn_set_bool(&tmp, pop);
-                dyn_list_push(env_stack, &tmp);
+                dyn_set_bool(dyn_list_push_none(env_stack), pop);
                 pop = 0;
 
-                dyn_set_extern(&tmp, (void*)env->pc);
-                dyn_list_push(env_stack, &tmp);
+                dyn_set_extern(dyn_list_push_none(env_stack), (void*)env->data);
+                dyn_set_extern(dyn_list_push_none(env_stack), (void*)env->pc);
+
                 env->pc = dyn_fct_get_ss(dyc_ptr);
 
                 dyn_move(&tmp2, dyn_list_push_none(env_stack));
@@ -1053,14 +1054,12 @@ ss_int vm_size (vm_env* env)
     bytes += dyn_size(&env->memory);
     bytes += dyn_size(&env->functions);
     bytes += dyn_size(&env->rslt);
-    bytes += dyn_size(&env->data);
     return bytes;
 }
 
 void vm_reset (vm_env* env, ss_char hard)
 {
     DYN_SET_LIST(&env->stack);
-    dyn_set_list_len(&env->data, 1);
 
     if (hard) {
         dyn_dict_empty(&env->memory);
@@ -1151,7 +1150,6 @@ void vm_free (vm_env* env)
     dyn_list_free(&env->stack);
     dyn_dict_free(&env->memory);
     dyn_dict_free(&env->functions);
-    dyn_list_free(&env->data);
     free(env);
     return;
 }
