@@ -40,9 +40,6 @@
 #define STORE_RF    18
 #define STORE_LOC   19
 
-#define CALL_OPX    20
-#define CALL_OP     21        // char, operation with 1 or two params
-
 #define CALL_FCTX   22
 #define CALL_FCT    23      // unsigned char, char* until \0; of parameters, function name
 
@@ -73,6 +70,11 @@
 
 #define REF         42
 #define REC_SET     43
+
+#define OP          0b01000000
+#define OPX         0b01100000
+
+#define OPERATION   0b10011111
 
 #define POP         0b10000000
 #define POP_I       0b01111111
