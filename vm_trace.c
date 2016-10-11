@@ -28,11 +28,11 @@ void vm_trace (vm_env* env, ss_char* code)
     ss_strcat(log, (ss_str)": ");
 
     if ((*env->pc & POP_I) > 63) {
-        ss_strcat(log, (*env->pc & OP_I) >= 96
-                       ? (ss_str)"OPX "
-                       : (ss_str)"OP ");
+        ss_strcat(log, (ss_byte)(*env->pc & OPERATION) >= 96
+                       ? (ss_str)"OPX|"
+                       : (ss_str)"OP|");
 
-        ss_strcpy(&log[ss_strlen(log)], operators[*env->pc & OPERATION]);
+        ss_strcpy(&log[ss_strlen(log)], operators[*env->pc & OP_I]);
     }
     else
         ss_strcat(log, opcodes[(ss_int)*env->pc & POP_I]);
@@ -42,7 +42,7 @@ void vm_trace (vm_env* env, ss_char* code)
 
     log[ss_strlen(log)]=' ';
 
-    switch ( *env->pc & POP_I ) {
+    switch ( (*env->pc) & POP_I ) {
         case PROC    : ss_itoa(&log[16], *((ss_byte*) env->pc+1));
                        ss_strcat(log, (ss_str)", ");
                        ss_itoa(&log[ss_strlen(log)], *((ss_ushort*) (env->pc+2)));

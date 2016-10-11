@@ -161,6 +161,7 @@ ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
 do{
     dyn_free(&tmp);
     dyn_free(&tmp2);
+    dyc_ptr = NULL;
 
     if (env->status != VM_IDLE) {
         us_i = env->sp;
@@ -926,8 +927,7 @@ default:
 /*---------------------------------------------------------------------------*/
     uc_i = *(env->pc-1) & OP_I;
     uc_len = 1+(ss_byte)*env->pc++;
-
-    if ((*(env->pc-2) & OPERATION) == OPX) {
+    if ((*(env->pc-2) & OPX) == OPX) {
         dyc_ptr = (VM_STACK_REF_END(uc_len))->data.ref;
         dyn_move(dyc_ptr, VM_STACK_REF_END(uc_len));
     }
