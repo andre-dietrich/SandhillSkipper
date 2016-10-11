@@ -196,7 +196,7 @@ do{
     if (POP & *env->pc)
         pop = 1;
 
-switch((ss_byte)(POP_I & *env->pc++)){
+switch( uc_i = (ss_byte)(POP_I & *env->pc++)){
 /*---------------------------------------------------------------------------*/
 case RET:
 case RET_P:
@@ -210,7 +210,7 @@ case RET_P:
 
     env->sp = us_len;
 
-    if (*(env->pc-1) == RET_P) {
+    if (uc_i == RET_P) {
         dyn_list_pop(env_stack, &tmp2);
         env->pc = (ss_char*)dyn_get_extern(&tmp2);
         dyn_list_pop(env_stack, &tmp2);
@@ -263,14 +263,9 @@ case CST_N:
 
 /*---------------------------------------------------------------------------*/
 case CST_0:
-/*---------------------------------------------------------------------------*/
-    dyn_set_bool(&tmp, 0);
-    goto GOTO__PUSH_TMP;
-
-/*---------------------------------------------------------------------------*/
 case CST_1:
 /*---------------------------------------------------------------------------*/
-    dyn_set_bool(&tmp, 1);
+    dyn_set_bool(&tmp, uc_i == CST_1 ? 1 : 0);
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
@@ -690,7 +685,7 @@ case IT_NEXT3:
 
     dyc_ptr = IT_LIST;
 
-    switch (*(env->pc-1)) {
+    switch (uc_i) {
         case IT_NEXT0: {
             if (vm_get_iterator (VM_LOCAL, IT_DATA, i_i)) {
                 dyn_set_int(dyc_ptr2, i_i+1);
@@ -870,7 +865,6 @@ case IT_AS:
 case EXIT:
 case REC_SET:
 /*---------------------------------------------------------------------------*/
-    uc_i   = *(env->pc-1);
     uc_len = (ss_byte)*env->pc++;
     dyn_list_pop(env_stack, &tmp);
 
