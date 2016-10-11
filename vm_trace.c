@@ -26,19 +26,23 @@ void vm_trace (vm_env* env, ss_char* code)
         ss_strcpy(&log[0], (ss_str)"XXXX");
     }
     ss_strcat(log, (ss_str)": ");
-    ss_strcat(log, opcodes[(ss_int)*env->pc & POP_I]);
+
+    if ((*env->pc & POP_I) > 63) {
+        ss_strcat(log, (*env->pc & OP_I) >= 96
+                       ? (ss_str)"OPX "
+                       : (ss_str)"OP ");
+
+        ss_strcpy(&log[ss_strlen(log)], operators[*env->pc & OPERATION]);
+    }
+    else
+        ss_strcat(log, opcodes[(ss_int)*env->pc & POP_I]);
+
     if (*env->pc & POP)
         ss_strcat(log, (ss_str)"|P");
 
     log[ss_strlen(log)]=' ';
 
     switch ( *env->pc & POP_I ) {
-        case CALL_OP:
-        case CALL_OPX: ss_itoa(&log[16], *((ss_byte*) (env->pc+1)));
-                       ss_strcat(log, (ss_str)", ");
-                       ss_strcpy(&log[ss_strlen(log)], operators[(ss_int)*(env->pc+2)]);
-
-                       break;
         case PROC    : ss_itoa(&log[16], *((ss_byte*) env->pc+1));
                        ss_strcat(log, (ss_str)", ");
                        ss_itoa(&log[ss_strlen(log)], *((ss_ushort*) (env->pc+2)));
@@ -61,6 +65,7 @@ void vm_trace (vm_env* env, ss_char* code)
         case CST_STR :
         case LOAD    :
         case STORE_LOC:
+        default:
         case STORE   : ss_itoa(&log[16], *((ss_byte*) (env->pc+1)));
                        break;
 #ifdef S2_SET

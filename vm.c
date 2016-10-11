@@ -481,35 +481,6 @@ case STORE_LOC:
     dyn_set_ref(VM_STACK_END, dyc_ptr);
     continue;
 /*---------------------------------------------------------------------------*/
-case CALL_OPX:
-/*---------------------------------------------------------------------------*/
-    dyc_ptr2 = (VM_STACK_REF_END(*env->pc-1))->data.ref;
-    dyn_move(dyc_ptr2, VM_STACK_REF_END(*env->pc-1));
-/*---------------------------------------------------------------------------*/
-case CALL_OP:
-/*---------------------------------------------------------------------------*/
-    uc_len = (ss_byte)*env->pc++;
-
-    uc_i = vm_op_dispatch(&tmp,
-                          dyn_list_get_ref(env_stack, -uc_len-1),
-                          uc_len+1,
-                          (ss_byte)*env->pc++);
-
-    dyn_list_popi(env_stack, uc_len);
-
-    if (dyc_ptr2) {
-        dyn_move(&tmp, dyc_ptr2);
-        dyn_set_ref(VM_STACK_END, dyc_ptr2);
-        dyc_ptr2 = NULL;
-    }
-    else
-        dyn_move(&tmp, VM_STACK_END);
-
-    if (uc_i != VM_OK)
-        env->status = VM_OPERATION_NOT_PERMITTED;
-
-    continue;
-/*---------------------------------------------------------------------------*/
 case CALL_FCTX:
 /*---------------------------------------------------------------------------*/
     dyc_ptr2 = (VM_STACK_REF_END(*env->pc-1))->data.ref;
@@ -949,7 +920,41 @@ case REF:
     else
         env->status = VM_ERROR;
     continue;
+
+/*---------------------------------------------------------------------------*/
+default:
+/*---------------------------------------------------------------------------*/
+    uc_i = *(env->pc-1) & OP_I;
+    uc_len = 1+(ss_byte)*env->pc++;
+
+    if ((*(env->pc-2) & OPERATION) == OPX) {
+        dyc_ptr = (VM_STACK_REF_END(uc_len))->data.ref;
+        dyn_move(dyc_ptr, VM_STACK_REF_END(uc_len));
+    }
+
+    uc_i = vm_op_dispatch(&tmp,
+                          VM_STACK_REF_END(uc_len),
+                          uc_len,
+                          uc_i);
+
+    dyn_list_popi(env_stack, uc_len-1);
+
+    if (dyc_ptr) {
+        dyn_move(&tmp, dyc_ptr);
+        dyn_set_ref(VM_STACK_END, dyc_ptr);
+    }
+    else
+        dyn_move(&tmp, VM_STACK_END);
+
+    if (uc_i != VM_OK)
+        env->status = VM_OPERATION_NOT_PERMITTED;
+
+    continue;
 }
+
+
+
+
 
 }while(1);
 /*---------------------------------------------------------------------------*/

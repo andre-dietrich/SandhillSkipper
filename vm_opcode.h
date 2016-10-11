@@ -12,12 +12,11 @@
 #ifndef OPCODE_H__
 #define OPCODE_H__
 
-#define RET          0         // unsigned char
-#define SP_SAVEX     1                               // 0b000 0001 = remove slices
-#define RET_P        2                        // 0b000 0010 = restore program counter
-                               // 0b000 0100 = increase program counter by one
-                               // 0b000 1000 = return from loop
-#define SP_SAVE      3       /**< Store current stack-pointer on stack.         */
+#define SP_SAVEX     0
+#define SP_SAVE      1       /**< Store current stack-pointer on stack.         */
+
+#define RET          2         // unsigned char
+#define RET_P        3
 
 #define CST_N        4       /**< Push None value to stack.                     */
 #define CST_0        5       /**< Push Boolean False to stack.                  */
@@ -33,12 +32,14 @@
 #define CST_SET     13
 #define CST_DCT     14
 
-#define LOAD        15        // char* until \0, read var from memory and push to stack
-#define ELEM        16
+#define LOC         15
+#define LOCX        16
+#define LOAD        17        // char* until \0, read var from memory and push to stack
+#define ELEM        18
 
-#define STORE       17        // char* until \0, pop stack and store to memory
-#define STORE_RF    18
-#define STORE_LOC   19
+#define STORE       19        // char* until \0, pop stack and store to memory
+#define STORE_RF    20
+#define STORE_LOC   21
 
 #define CALL_FCTX   22
 #define CALL_FCT    23      // unsigned char, char* until \0; of parameters, function name
@@ -48,32 +49,30 @@
 
 #define PROC        26      // unsigned char, unsigned short
 
-#define LOC         27
-#define LOCX        28
+#define IT_INIT     27
+#define IT_NEXT0    28
+#define IT_NEXT1    29
+#define IT_NEXT2    30
+#define IT_NEXT3    31
+#define IT_STORE    32
+#define IT_LIMIT    33
 
-#define IT_INIT     29
-#define IT_NEXT0    30
-#define IT_NEXT1    31
-#define IT_NEXT2    32
-#define IT_NEXT3    33
-#define IT_STORE    34
-#define IT_LIMIT    35
+#define IT_GROUP    34
+#define IT_ORDER    35
+#define IT_AS       36
 
-#define IT_GROUP    36
-#define IT_ORDER    37
-#define IT_AS       38
+#define EXIT        37
+#define REC_SET     38
 
-#define EXIT        39
+#define TRY_1       39
+#define TRY_0       40
 
-#define TRY_1       40
-#define TRY_0       41
+#define REF         41
 
-#define REF         42
-#define REC_SET     43
 
 #define OP          0b01000000
 #define OPX         0b01100000
-
+#define OP_I        0b00011111
 #define OPERATION   0b10011111
 
 #define POP         0b10000000
