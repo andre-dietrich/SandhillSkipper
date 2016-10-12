@@ -177,12 +177,6 @@ do{
             return env->status;
     }
 
-    if (pop) {
-        dyn_list_popi(env_stack, 1);
-        env->loc = NULL;
-        pop = 0;
-    }
-
     if (execution_steps) {
         if (!--execution_steps) {
             return 0;
@@ -940,8 +934,16 @@ default:
 
     break;
 }
+
 L_SWITCH_END:
-    env->pc = pc;
+
+env->pc = pc;
+if (pop) {
+    dyn_list_popi(env_stack, 1);
+    env->loc = NULL;
+    pop = 0;
+}
+
 
 }while(1);
 /*---------------------------------------------------------------------------*/
