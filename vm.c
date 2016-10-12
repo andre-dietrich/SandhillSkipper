@@ -228,9 +228,7 @@ case RET_P:
     if(!env->sp)
         goto GOTO__FINISH;
 
-    dyn_move(&tmp, dyn_list_push_none(env_stack));
-
-    continue;
+    goto GOTO__PUSH_TMP;
 /*---------------------------------------------------------------------------*/
 case SP_SAVEX:
 /*---------------------------------------------------------------------------*/
@@ -251,15 +249,8 @@ case SP_SAVE:
 
 LABEL_SP:
     dyn_set_int(&tmp, env->sp);
-    dyn_list_push(env_stack, &tmp);
-    env->sp = VM_STACK_LEN-1;
-
-    continue;
-/*---------------------------------------------------------------------------*/
-case CST_N:
-/*---------------------------------------------------------------------------*/
-    dyn_list_push_none(env_stack);
-    continue;
+    env->sp = VM_STACK_LEN;
+    goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
 case CST_0:
@@ -285,19 +276,19 @@ case CST_I:
                    ? 2
                    : 4 );
 
-    goto GOTO__PUSH_TMP;
+/*---------------------------------------------------------------------------*/
+case CST_N:
+GOTO__PUSH_TMP:
+/*---------------------------------------------------------------------------*/
+   dyn_move(&tmp, dyn_list_push_none(env_stack));
+   continue;
 
 /*---------------------------------------------------------------------------*/
 case CST_F:
 /*---------------------------------------------------------------------------*/
     dyn_set_float(&tmp, *((ss_float*) env->pc));
     env->pc+=4;
-
-/*---------------------------------------------------------------------------*/
-GOTO__PUSH_TMP:
-/*---------------------------------------------------------------------------*/
-    dyn_list_push(env_stack, &tmp);
-    continue;
+    goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
 case CST_STR:
@@ -315,16 +306,16 @@ case CST_LST:
 
     dyn_set_list_len(&tmp, us_len);
 
-    for(us_i=0; us_i<us_len; ++us_i) {
-        dyn_move(dyn_list_get_ref(env_stack, -us_len+us_i),
-                 dyn_list_push_none(&tmp));
+    us_i = us_len + 1;
+
+    while (--us_i) {
+        dyn_move( VM_STACK_REF_END(us_i),
+                  dyn_list_push_none(&tmp));
     }
 
     dyn_list_popi(env_stack, us_len);
 
-    dyn_move(&tmp, dyn_list_push_none(env_stack));
-
-    continue;
+    goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
 case CST_SET:
@@ -334,13 +325,14 @@ case CST_SET:
     env->pc+=2;
     dyn_set_set_len(&tmp, us_len);
 
-    for(us_i=0; us_i<us_len; ++us_i)
-        dyn_set_insert(&tmp, dyn_list_get_ref(env_stack, -us_len+us_i));
+    us_i = us_len + 1;
+
+    while (--us_i) {
+        dyn_set_insert(&tmp, VM_STACK_REF_END(us_i));
+    }
 
     dyn_list_popi(env_stack, us_len);
-    dyn_move(&tmp, dyn_list_push_none(env_stack));
-
-    continue;
+    goto GOTO__PUSH_TMP;
 
 #endif
 /*---------------------------------------------------------------------------*/
@@ -350,15 +342,15 @@ case CST_DCT:
 
     dyn_set_dict(&tmp, uc_len);
 
-    for (uc_i=uc_len; uc_i; --uc_i) {
-        dyn_move(VM_STACK_REF_END(uc_i),
-                 dyn_dict_insert(&tmp, VM_DATA((ss_byte)*env->pc++), &tmp2));
+    uc_i = uc_len + 1;
+
+    while (--uc_i) {
+        dyn_move( VM_STACK_REF_END(uc_i),
+                  dyn_dict_insert(&tmp, VM_DATA((ss_byte)*env->pc++), &tmp2));
     }
 
     dyn_list_popi(env_stack, uc_len);
-    dyn_move(&tmp, dyn_list_push_none(env_stack));
-
-    continue;
+    goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
 case LOAD:
@@ -592,9 +584,9 @@ case PROC:
                    env->pc,
                    cp_str);
 
-   env->pc += us_len;
+    env->pc += us_len;
 
-   goto GOTO__PUSH_TMP;
+    goto GOTO__PUSH_TMP;
 /*---------------------------------------------------------------------------*/
 case LOC:
 /*---------------------------------------------------------------------------*/
@@ -666,6 +658,7 @@ case IT_INIT:
     dyn_set_list_len(&tmp, 10);
     dyn_list_push(env_stack, &tmp);
     dyn_set_int(&tmp, 0);
+    
     dyn_list_push(env_stack, &tmp);
     dyn_list_push(env_stack, &tmp);
 
@@ -945,9 +938,6 @@ default:
 
     continue;
 }
-
-
-
 
 
 }while(1);
