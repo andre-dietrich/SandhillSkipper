@@ -267,11 +267,8 @@ case CST_I:
                           ? *((ss_short*) pc )
                           : *((ss_int*) pc)));
 
-    pc += uc_i == CST_B
-               ? 1
-               : ( uc_i == CST_S
-                   ? 2
-                   : 4 );
+    pc += (uc_i == CST_B) ? 1 : ( uc_i == CST_S
+                                  ? 2 : 4 );
 
 /*---------------------------------------------------------------------------*/
 case CST_N:
@@ -533,7 +530,9 @@ case CALL_FCT:
             // System C-function
             case 2: {
                 sys f = (sys) dyc_ptr->data.fct->ptr;
+                env->pc=pc;
                 uc_i  = (*f)(env, &tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
+                pc=env->pc;
             }
         }
 
