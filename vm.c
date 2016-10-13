@@ -222,6 +222,7 @@ case RET_P:
             dyn_move(&tmp, (dyn_c*)dyn_get_extern(&tmp2));
             dyn_set_ref(dyn_list_push_none(env_stack),
                         (dyn_c*)dyn_get_extern(&tmp2));
+            continue;
         }
     }
 
@@ -511,8 +512,10 @@ case CALL_FCT:
                 dyn_list_popi(env_stack, uc_len+1);
 
                 dyn_list_push_none(env_stack);
-                if (dyc_ptr2)
+                if (dyc_ptr2) {
                     dyn_set_extern(VM_STACK_END, dyc_ptr2);
+                    //dyc_ptr2 = NULL;
+                }
 
                 dyn_set_bool(dyn_list_push_none(env_stack), pop);
                 pop = 0;
@@ -523,7 +526,6 @@ case CALL_FCT:
                 env->pc = dyn_fct_get_ss(dyc_ptr);
 
                 dyn_move(&tmp2, dyn_list_push_none(env_stack));
-
                 continue;
 
             }
@@ -658,7 +660,7 @@ case IT_INIT:
     dyn_set_list_len(&tmp, 10);
     dyn_list_push(env_stack, &tmp);
     dyn_set_int(&tmp, 0);
-    
+
     dyn_list_push(env_stack, &tmp);
     dyn_list_push(env_stack, &tmp);
 
