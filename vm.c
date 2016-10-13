@@ -178,13 +178,6 @@ do{
         else
             return env->status;
     }
-    env->pc = pc;
-
-    if (pop) {
-        dyn_list_popi(env_stack, 1);
-        env->loc = NULL;
-        pop = 0;
-    }
 
     if (execution_steps) {
         if (!--execution_steps) {
@@ -225,7 +218,7 @@ case RET_P:
             dyn_move(&tmp, (dyn_c*)dyn_get_extern(&tmp2));
             dyn_set_ref(dyn_list_push_none(env_stack),
                         (dyn_c*)dyn_get_extern(&tmp2));
-            continue;
+            goto L_SWITCH_END;
         }
     }
 
@@ -285,7 +278,7 @@ case CST_N:
 GOTO__PUSH_TMP:
 /*---------------------------------------------------------------------------*/
    dyn_move(&tmp, dyn_list_push_none(env_stack));
-   continue;
+   break;
 
 /*---------------------------------------------------------------------------*/
 case CST_F:
@@ -300,7 +293,7 @@ case CST_STR:
     dyn_set_string( dyn_list_push_none(env_stack),
                     VM_DATA((ss_byte)*pc++));
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case CST_LST:
@@ -372,7 +365,7 @@ case LOAD:
     else
         env->status = VM_ERROR;
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case ELEM:
@@ -396,7 +389,7 @@ case ELEM:
                         dyc_ptr = dyn_list_get_ref(dyc_ptr, dyn_get_int( VM_STACK_END ));
                         if (dyc_ptr == NULL) {
                             env->status = VM_ERROR;
-                            continue;
+                            goto L_SWITCH_END;
                         }
                         break; // optimize this
         case DICT:      cp_str = dyn_get_string( VM_STACK_END );
@@ -424,7 +417,7 @@ case ELEM:
         dyn_move(&tmp, VM_STACK_END);
     }
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case STORE:
@@ -435,7 +428,7 @@ case STORE:
 
     dyn_move(VM_STACK_END, dyc_ptr);
     dyn_set_ref(VM_STACK_END, dyc_ptr);
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case STORE_RF:
@@ -449,7 +442,7 @@ case STORE_RF:
     if (env->loc && DYN_TYPE(dyc_ptr->data.ref)==FUNCTION)
         dyn_dict_set_loc(env->loc);
 
-    continue;
+    break;
 /*---------------------------------------------------------------------------*/
 case STORE_LOC:
 /*---------------------------------------------------------------------------*/
@@ -469,7 +462,7 @@ case STORE_LOC:
     dyn_move(VM_STACK_END, DYN_IS_REFERENCE(dyc_ptr) ? dyc_ptr->data.ref : dyc_ptr);
 
     dyn_set_ref(VM_STACK_END, dyc_ptr);
-    continue;
+    break;
 /*---------------------------------------------------------------------------*/
 case CALL_FCTX:
 /*---------------------------------------------------------------------------*/
@@ -515,10 +508,8 @@ case CALL_FCT:
                 dyn_list_popi(env_stack, uc_len+1);
 
                 dyn_list_push_none(env_stack);
-                if (dyc_ptr2) {
+                if (dyc_ptr2)
                     dyn_set_extern(VM_STACK_END, dyc_ptr2);
-                    //dyc_ptr2 = NULL;
-                }
 
                 dyn_set_bool(dyn_list_push_none(env_stack), pop);
                 pop = 0;
@@ -529,7 +520,8 @@ case CALL_FCT:
                 pc = dyn_fct_get_ss(dyc_ptr);
 
                 dyn_move(&tmp2, dyn_list_push_none(env_stack));
-                continue;
+
+                goto L_SWITCH_END;
 
             }
             // Normal C-function
@@ -559,7 +551,7 @@ case CALL_FCT:
             env->status = VM_FUNCTION_ERROR;
     }
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case FJUMP:
@@ -571,7 +563,7 @@ case FJUMP:
 case JUMP:
         pc += *((ss_short*)pc);
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case PROC:
@@ -605,7 +597,7 @@ case LOC:
     else
         env->status = VM_ERROR;
 
-    continue;
+    break;
 /*---------------------------------------------------------------------------*/
 case LOCX:
 /*---------------------------------------------------------------------------*/
@@ -646,7 +638,7 @@ case LOCX:
         }
     }
 
-    continue;
+    break;
 /*---------------------------------------------------------------------------*/
 case IT_INIT:
 /*---------------------------------------------------------------------------*/
@@ -667,7 +659,7 @@ case IT_INIT:
     dyn_list_push(env_stack, &tmp);
     dyn_list_push(env_stack, &tmp);
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case IT_NEXT0:
@@ -726,7 +718,7 @@ case IT_NEXT3:
     }
 
     dyc_ptr2 = NULL;
-    continue;
+    break;
 }
 /*---------------------------------------------------------------------------*/
 case IT_STORE:
@@ -734,7 +726,7 @@ case IT_STORE:
     dyn_set_int(&tmp, dyn_get_int(VM_STACK_REF(env->sp+3))-1);
     dyn_list_push(VM_STACK_REF(env->sp+2), &tmp);
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case IT_LIMIT:
@@ -745,7 +737,7 @@ case IT_LIMIT:
                           ? DYN_TRUE
                           : ( dyn_set_int(IT_COUNT1, 0), DYN_FALSE) );
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case IT_GROUP:
@@ -788,7 +780,7 @@ case IT_GROUP:
     }
 
     dyn_list_popi(env_stack, 1);
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case IT_ORDER:
@@ -819,7 +811,7 @@ case IT_ORDER:
         dyn_set_int(VM_STACK_END, 1);
     }
 
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case IT_AS:
@@ -855,7 +847,7 @@ case IT_AS:
                 break;
     }
     dyn_list_popi(env_stack, VM_STACK_LEN - env->sp - 6);
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case EXIT:
@@ -883,7 +875,7 @@ case REC_SET:
         }
         pop = 0;
     }
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 case TRY_1:
@@ -895,14 +887,14 @@ case TRY_1:
 
     dyn_dict_insert(VM_LOCAL, VM_TRY, &tmp);
 
-    continue;
+    break;
 /*---------------------------------------------------------------------------*/
 case TRY_0:
 /*---------------------------------------------------------------------------*/
 
     dyn_dict_remove(VM_LOCAL, VM_TRY);
 
-    continue;
+    break;
 /*---------------------------------------------------------------------------*/
 case REF:
 /*---------------------------------------------------------------------------*/
@@ -910,7 +902,7 @@ case REF:
         DYN_TYPE(VM_STACK_END) = REFERENCE2;
     else
         env->status = VM_ERROR;
-    continue;
+    break;
 
 /*---------------------------------------------------------------------------*/
 default:
@@ -941,7 +933,15 @@ default:
     if (uc_i != VM_OK)
         env->status = VM_OPERATION_NOT_PERMITTED;
 
-    continue;
+}
+
+L_SWITCH_END:
+
+env->pc = pc;
+if (pop) {
+    dyn_list_popi(env_stack, 1);
+    env->loc = NULL;
+    pop = 0;
 }
 
 
