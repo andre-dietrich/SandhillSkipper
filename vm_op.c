@@ -255,16 +255,16 @@ ss_char vm_sys_print (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
         dyn_free(rslt);
         goto LABEL_OK;
     }
-
-    ss_str str = NULL;
-    ss_byte i;
-    for (i=0; i<len; ++i) {
-        str = dyn_get_string(&params[i]);
-        vm_printf(str, 0);
-        free(str);
-        vm_printf((ss_str)" ", 0);
+    {
+        ss_str str = NULL;
+        ss_byte i;
+        for (i=0; i<len; ++i) {
+            str = dyn_get_string(&params[i]);
+            vm_printf(str, 0);
+            free(str);
+            vm_printf((ss_str)" ", 0);
+        }
     }
-
 LABEL_OK:
     vm_printf((ss_str)"", 1);
     return VM_OK;

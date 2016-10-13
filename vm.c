@@ -931,7 +931,6 @@ default:
 
     if (uc_i != VM_OK)
         env->status = VM_OPERATION_NOT_PERMITTED;
-
 }
 
 L_SWITCH_END:
