@@ -152,6 +152,7 @@ ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
         env->pc = code;
         dyn_list_push_none(env_stack);
     }
+    char* pc = env->pc;
 
     ss_short execution_steps = env->execution_steps;
 
@@ -163,6 +164,7 @@ do{
     dyn_free(&tmp2);
     dyc_ptr = NULL;
 
+
     if (env->status != VM_IDLE) {
         us_i = env->sp;
         dyc_ptr = find_local(stack, &us_i, VM_TRY);
@@ -170,12 +172,13 @@ do{
             env->status = VM_IDLE;
             env->sp = us_i;
             dyn_list_popi(env_stack, VM_STACK_LEN - us_i -1);
-            env->pc = (char*) dyn_get_extern(dyc_ptr);
+            pc = (char*) dyn_get_extern(dyc_ptr);
             dyn_dict_remove(VM_LOCAL, VM_TRY);
         }
         else
             return env->status;
     }
+    env->pc = pc;
 
     if (pop) {
         dyn_list_popi(env_stack, 1);
@@ -193,10 +196,10 @@ do{
     if (trace)
         vm_trace(env, code);
 #endif
-    if (POP & *env->pc)
+    if (POP & *pc)
         pop = 1;
 
-switch( uc_i = (ss_byte)(POP_I & *env->pc++)){
+switch( uc_i = (ss_byte)(POP_I & *pc++)){
 /*---------------------------------------------------------------------------*/
 case RET:
 case RET_P:
@@ -212,7 +215,7 @@ case RET_P:
 
     if (uc_i == RET_P) {
         dyn_list_pop(env_stack, &tmp2);
-        env->pc = (ss_char*)dyn_get_extern(&tmp2);
+        pc = (ss_char*)dyn_get_extern(&tmp2);
         dyn_list_pop(env_stack, &tmp2);
         env->data = (ss_char*)dyn_get_extern(&tmp2);
         dyn_list_pop(env_stack, &tmp2);
@@ -234,12 +237,12 @@ case RET_P:
 case SP_SAVEX:
 /*---------------------------------------------------------------------------*/
     // init data
-    uc_len = (ss_byte)*env->pc++;
+    uc_len = (ss_byte)*pc++;
 
-    env->data = env->pc;
+    env->data = pc;
 
     while(uc_len--) {
-        env->pc += (ss_byte)*env->pc;
+        pc += (ss_byte)*pc;
     }
 
     goto LABEL_SP;
@@ -266,12 +269,12 @@ case CST_S:
 case CST_I:
 /*---------------------------------------------------------------------------*/
     dyn_set_int(&tmp, uc_i == CST_B
-                      ? *((ss_char*) env->pc)
+                      ? *((ss_char*) pc)
                       : ( uc_i == CST_S
-                          ? *((ss_short*) env->pc )
-                          : *((ss_int*) env->pc)));
+                          ? *((ss_short*) pc )
+                          : *((ss_int*) pc)));
 
-    env->pc += uc_i == CST_B
+    pc += uc_i == CST_B
                ? 1
                : ( uc_i == CST_S
                    ? 2
@@ -287,23 +290,23 @@ GOTO__PUSH_TMP:
 /*---------------------------------------------------------------------------*/
 case CST_F:
 /*---------------------------------------------------------------------------*/
-    dyn_set_float(&tmp, *((ss_float*) env->pc));
-    env->pc+=4;
+    dyn_set_float(&tmp, *((ss_float*) pc));
+    pc+=4;
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
 case CST_STR:
 /*---------------------------------------------------------------------------*/
     dyn_set_string( dyn_list_push_none(env_stack),
-                    VM_DATA((ss_byte)*env->pc++));
+                    VM_DATA((ss_byte)*pc++));
 
     continue;
 
 /*---------------------------------------------------------------------------*/
 case CST_LST:
 /*---------------------------------------------------------------------------*/
-    us_len = *((ss_ushort*) env->pc);
-    env->pc+=2;
+    us_len = *((ss_ushort*) pc);
+    pc+=2;
 
     dyn_set_list_len(&tmp, us_len);
 
@@ -322,8 +325,8 @@ case CST_LST:
 case CST_SET:
 /*---------------------------------------------------------------------------*/
 #ifdef S2_SET
-    us_len = *((ss_ushort*) env->pc);
-    env->pc+=2;
+    us_len = *((ss_ushort*) pc);
+    pc+=2;
     dyn_set_set_len(&tmp, us_len);
 
     us_i = us_len + 1;
@@ -339,7 +342,7 @@ case CST_SET:
 /*---------------------------------------------------------------------------*/
 case CST_DCT:
 /*---------------------------------------------------------------------------*/
-    uc_len = *((ss_byte*) env->pc++);
+    uc_len = *((ss_byte*) pc++);
 
     dyn_set_dict(&tmp, uc_len);
 
@@ -347,7 +350,7 @@ case CST_DCT:
 
     while (--uc_i) {
         dyn_move( VM_STACK_REF_END(uc_i),
-                  dyn_dict_insert(&tmp, VM_DATA((ss_byte)*env->pc++), &tmp2));
+                  dyn_dict_insert(&tmp, VM_DATA((ss_byte)*pc++), &tmp2));
     }
 
     dyn_list_popi(env_stack, uc_len);
@@ -357,7 +360,7 @@ case CST_DCT:
 case LOAD:
 /*---------------------------------------------------------------------------*/
 
-    cp_str = VM_DATA((ss_byte)*env->pc++);
+    cp_str = VM_DATA((ss_byte)*pc++);
 
     dyc_ptr = dyn_dict_get(&env->memory, cp_str);
 
@@ -426,7 +429,7 @@ case ELEM:
 /*---------------------------------------------------------------------------*/
 case STORE:
 /*---------------------------------------------------------------------------*/
-    cp_str = VM_DATA((ss_byte)*env->pc++);
+    cp_str = VM_DATA((ss_byte)*pc++);
 
     dyc_ptr = dyn_dict_insert(&env->memory, cp_str, &tmp);
 
@@ -450,7 +453,7 @@ case STORE_RF:
 /*---------------------------------------------------------------------------*/
 case STORE_LOC:
 /*---------------------------------------------------------------------------*/
-    cp_str = VM_DATA((ss_byte)*env->pc++);
+    cp_str = VM_DATA((ss_byte)*pc++);
 
     us_i = env->sp;
 
@@ -470,12 +473,12 @@ case STORE_LOC:
 /*---------------------------------------------------------------------------*/
 case CALL_FCTX:
 /*---------------------------------------------------------------------------*/
-    dyc_ptr2 = (VM_STACK_REF_END(*env->pc-1))->data.ref;
-    dyn_move(dyc_ptr2, VM_STACK_REF_END(*env->pc-1));
+    dyc_ptr2 = (VM_STACK_REF_END(*pc-1))->data.ref;
+    dyn_move(dyc_ptr2, VM_STACK_REF_END(*pc-1));
 /*---------------------------------------------------------------------------*/
 case CALL_FCT:
 /*---------------------------------------------------------------------------*/
-    uc_len = (ss_byte) *env->pc++;
+    uc_len = (ss_byte) *pc++;
 
     dyc_ptr = VM_STACK_END;
 
@@ -521,9 +524,9 @@ case CALL_FCT:
                 pop = 0;
 
                 dyn_set_extern(dyn_list_push_none(env_stack), (void*)env->data);
-                dyn_set_extern(dyn_list_push_none(env_stack), (void*)env->pc);
+                dyn_set_extern(dyn_list_push_none(env_stack), (void*)pc);
 
-                env->pc = dyn_fct_get_ss(dyc_ptr);
+                pc = dyn_fct_get_ss(dyc_ptr);
 
                 dyn_move(&tmp2, dyn_list_push_none(env_stack));
                 continue;
@@ -563,10 +566,10 @@ case FJUMP:
 /*---------------------------------------------------------------------------*/
     dyn_list_pop(env_stack, &tmp);
     if (dyn_get_bool_3(&tmp)>0)
-        env->pc += 2;
+        pc += 2;
     else
 case JUMP:
-        env->pc += *((ss_short*)env->pc);
+        pc += *((ss_short*)pc);
 
     continue;
 
@@ -574,25 +577,25 @@ case JUMP:
 case PROC:
 /*---------------------------------------------------------------------------*/
     // info
-    cp_str = VM_DATA((ss_byte)*env->pc++);
-    us_len = *((ss_ushort*) env->pc);  // bytecode length
-    env->pc+=2;
+    cp_str = VM_DATA((ss_byte)*pc++);
+    us_len = *((ss_ushort*) pc);  // bytecode length
+    pc+=2;
 
     dyn_list_pop(env_stack, &tmp2);
 
     dyn_set_fct_ss(&tmp,
                    &tmp2,
                    us_len,
-                   env->pc,
+                   pc,
                    cp_str);
 
-    env->pc += us_len;
+    pc += us_len;
 
     goto GOTO__PUSH_TMP;
 /*---------------------------------------------------------------------------*/
 case LOC:
 /*---------------------------------------------------------------------------*/
-    cp_str = VM_DATA((ss_byte)*env->pc++);
+    cp_str = VM_DATA((ss_byte)*pc++);
 
     us_i = env->sp;
 
@@ -606,7 +609,7 @@ case LOC:
 /*---------------------------------------------------------------------------*/
 case LOCX:
 /*---------------------------------------------------------------------------*/
-    cp_str = VM_DATA((ss_byte)*env->pc++);
+    cp_str = VM_DATA((ss_byte)*pc++);
 
     dyn_list_pop(env_stack, &tmp);
 
@@ -747,7 +750,7 @@ case IT_LIMIT:
 /*---------------------------------------------------------------------------*/
 case IT_GROUP:
 /*---------------------------------------------------------------------------*/
-    uc_len  = *((ss_byte*)env->pc++);
+    uc_len  = *((ss_byte*)pc++);
     cp_str  = dyn_get_string(VM_STACK_END);
     dyc_ptr = VM_STACK_REF(env->sp+6);
     us_i    = dyn_dict_has_key(dyc_ptr, cp_str);
@@ -822,7 +825,7 @@ case IT_ORDER:
 case IT_AS:
 /*---------------------------------------------------------------------------*/
     dyc_ptr = VM_STACK_REF(env->sp + 5);
-    switch (*env->pc++) {
+    switch (*pc++) {
         case 0: // as void
                 dyn_move(VM_STACK_END, dyc_ptr);
                 break;
@@ -834,7 +837,7 @@ case IT_AS:
 #endif
         case 2: // as list
                 for (i_i= env->sp + 6; i_i<VM_STACK_LEN; ++i_i) {
-                    if(*(env->pc-1) == 2)
+                    if(*(pc-1) == 2)
                         dyn_list_push(dyc_ptr, VM_STACK_REF(i_i));
 #ifdef S2_SET
                     else
@@ -858,7 +861,7 @@ case IT_AS:
 case EXIT:
 case REC_SET:
 /*---------------------------------------------------------------------------*/
-    uc_len = (ss_byte)*env->pc++;
+    uc_len = (ss_byte)*pc++;
     dyn_list_pop(env_stack, &tmp);
 
     while(uc_len--) {
@@ -885,10 +888,10 @@ case REC_SET:
 /*---------------------------------------------------------------------------*/
 case TRY_1:
 /*---------------------------------------------------------------------------*/
-    us_len = *((ss_short*) env->pc);
-    env->pc += 2;
+    us_len = *((ss_short*) pc);
+    pc += 2;
     dyn_set_dict(VM_LOCAL, 1);
-    dyn_set_extern(&tmp, env->pc + us_len);
+    dyn_set_extern(&tmp, pc + us_len);
 
     dyn_dict_insert(VM_LOCAL, VM_TRY, &tmp);
 
@@ -914,7 +917,7 @@ default:
 /*---------------------------------------------------------------------------*/
     us_i = uc_i & OP_I;
 
-    uc_len = 1+(ss_byte)*env->pc++;
+    uc_len = 1+(ss_byte)*pc++;
 
     if ((uc_i & OPX) == OPX) {
         dyc_ptr = (VM_STACK_REF_END(uc_len))->data.ref;
