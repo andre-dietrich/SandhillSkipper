@@ -54,7 +54,7 @@ dyn_c* find_local(dyn_list* stack, ss_ushort* start, ss_str id)
         pos = dyn_get_int(VM_STACK_REF(pos));
     }
 
-    return NULL;
+    return (dyn_c*) NULL;
 }
 
 char * get_data(char* base, ss_byte i)
@@ -81,36 +81,36 @@ vm_env* vm_init (ss_ushort memory_size,
     dyn_set_none(&env->rslt);
 
     DYN_INIT(&env->memory);
-    dyn_set_dict(&env->memory, 1);
+    dyn_set_dict(&env->memory, 5);
 
     DYN_INIT(&env->functions);
     dyn_set_dict(&env->functions, 21);
 
-    vm_add_function(env, (ss_str)"print", (void*)vm_sys_print,    (ss_str) "", 1); //"print: prints out the passed parameters, the last defines the return value ...");
+    vm_add_function(env, (ss_str)"print", (void*)vm_sys_print,    NULL, FCT_SYS); //"print: prints out the passed parameters, the last defines the return value ...");
 //     vm_add_function(env, (ss_str)"help",  (void*)vm_sys_help,     (ss_str) "", 1); //"general help function ...");
-    vm_add_function(env, (ss_str)"mem",   (void*)vm_sys_mem,      (ss_str) "", 1); //"show mem ...");
-    vm_add_function(env, (ss_str)"del",   (void*)vm_sys_del,      (ss_str) "", 1); //"delete from memory ...");
+    vm_add_function(env, (ss_str)"mem",   (void*)vm_sys_mem,      NULL, FCT_SYS); //"show mem ...");
+    vm_add_function(env, (ss_str)"del",   (void*)vm_sys_del,      NULL, FCT_SYS); //"delete from memory ...");
     /*------------------------------------------------------------------------*/
-    vm_add_function(env, (ss_str)"size",  (void*)ss_size_fct,     (ss_str) "", 0); //"size");
-    vm_add_function(env, (ss_str)"float", (void*)ss_float_fct,    (ss_str) "", 0); //"to float");
-    vm_add_function(env, (ss_str)"str",   (void*)ss_str_fct,      (ss_str) "", 0); //"to string");
-    vm_add_function(env, (ss_str)"int",   (void*)ss_int_fct,      (ss_str) "", 0); //"to int");
-    vm_add_function(env, (ss_str)"type",  (void*)ss_type_fct,     (ss_str) "", 0); //"type");
-    vm_add_function(env, (ss_str)"len",   (void*)ss_len_fct,      (ss_str) "", 0); //"length");
-    vm_add_function(env, (ss_str)"time",  (void*)ss_time_fct,     (ss_str) "", 0); //"time");
+    vm_add_function(env, (ss_str)"size",  (void*)ss_size_fct,     NULL, FCT_C); //"size");
+    vm_add_function(env, (ss_str)"float", (void*)ss_float_fct,    NULL, FCT_C); //"to float");
+    vm_add_function(env, (ss_str)"str",   (void*)ss_str_fct,      NULL, FCT_C); //"to string");
+    vm_add_function(env, (ss_str)"int",   (void*)ss_int_fct,      NULL, FCT_C); //"to int");
+    vm_add_function(env, (ss_str)"type",  (void*)ss_type_fct,     NULL, FCT_C); //"type");
+    vm_add_function(env, (ss_str)"len",   (void*)ss_len_fct,      NULL, FCT_C); //"length");
+    vm_add_function(env, (ss_str)"time",  (void*)ss_time_fct,     NULL, FCT_C); //"time");
 
-    vm_add_function(env, (ss_str)"none?", (void*)ss_is_none_fct,  (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"bool?", (void*)ss_is_bool_fct,  (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"int?",  (void*)ss_is_int_fct,   (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"float?",(void*)ss_is_float_fct, (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"str?",  (void*)ss_is_str_fct,   (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"list?", (void*)ss_is_list_fct,  (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"dict?", (void*)ss_is_dict_fct,  (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"proc?", (void*)ss_is_proc_fct,  (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"ex?",   (void*)ss_is_ex_fct,    (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"none?", (void*)ss_is_none_fct,  NULL, FCT_C);
+    vm_add_function(env, (ss_str)"bool?", (void*)ss_is_bool_fct,  NULL, FCT_C);
+    vm_add_function(env, (ss_str)"int?",  (void*)ss_is_int_fct,   NULL, FCT_C);
+    vm_add_function(env, (ss_str)"float?",(void*)ss_is_float_fct, NULL, FCT_C);
+    vm_add_function(env, (ss_str)"str?",  (void*)ss_is_str_fct,   NULL, FCT_C);
+    vm_add_function(env, (ss_str)"list?", (void*)ss_is_list_fct,  NULL, FCT_C);
+    vm_add_function(env, (ss_str)"dict?", (void*)ss_is_dict_fct,  NULL, FCT_C);
+    vm_add_function(env, (ss_str)"proc?", (void*)ss_is_proc_fct,  NULL, FCT_C);
+    vm_add_function(env, (ss_str)"ex?",   (void*)ss_is_ex_fct,    NULL, FCT_C);
 
-    vm_add_function(env, (ss_str)"insert",(void*)ss_insert,       (ss_str) "", 0);
-    vm_add_function(env, (ss_str)"remove",(void*)ss_remove,       (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"insert",(void*)ss_insert,       NULL, FCT_C);
+    vm_add_function(env, (ss_str)"remove",(void*)ss_remove,       NULL, FCT_C);
 
     env->loc = NULL;
     env->data = NULL;
@@ -163,7 +163,6 @@ do{
     dyn_free(&tmp);
     dyn_free(&tmp2);
     dyc_ptr = NULL;
-
 
     if (env->status != VM_IDLE) {
         us_i = env->sp;
@@ -421,10 +420,12 @@ case STORE:
 /*---------------------------------------------------------------------------*/
     cp_str = VM_DATA((ss_byte)*pc++);
 
-    dyc_ptr = dyn_dict_insert(&env->memory, cp_str, &tmp);
+    dyn_move(VM_STACK_END, &tmp);
 
-    dyn_move(VM_STACK_END, dyc_ptr);
-    dyn_set_ref(VM_STACK_END, dyc_ptr);
+    dyn_set_ref(VM_STACK_END, dyn_dict_insert(&env->memory, cp_str, &tmp));
+
+    //fprintf(stderr, "%s\n", );
+
     break;
 
 /*---------------------------------------------------------------------------*/
@@ -476,23 +477,34 @@ case CALL_FCT:
         dyc_ptr = dyc_ptr->data.ref;
 
     if (DYN_TYPE(dyc_ptr) == FUNCTION) {
-        switch (dyc_ptr->data.fct->type) {
+        switch (dyc_ptr->data.fct->tp) {
+            // Normal C-function
+            case FCT_C: {
+                fct f = (fct) dyc_ptr->data.fct->ptr;
+                uc_i  = (*f)(&tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
+                break;
+            }
+            // System C-function
+            case FCT_SYS: {
+                sys f = (sys) dyc_ptr->data.fct->ptr;
+                env->pc=pc;
+                uc_i  = (*f)(env, &tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
+                pc=env->pc;
+                break;
+            }
             // PROCEDURE
-            case 0: {
-
-                dyn_proc *proc = (dyn_proc*) dyc_ptr->data.fct->ptr;
-
-                dyn_copy(&proc->params, &tmp2);
+            default: {
+                dyn_copy((dyn_c*)dyc_ptr->data.fct->params, &tmp2);
 
                 us_len = VM_STACK_LEN - uc_len - 1;
 
                 us_i = 0;
-                if (DYN_NOT_NONE(&proc->params)) {
-                    // todo optimize
+                if (DYN_NOT_NONE(&tmp2)) {
                     if (DYN_DICT_GET_I_KEY(&tmp2, 0)[0] == 0) {
-                        if (DYN_DICT_LEN((&proc->params)) == uc_len)
-                            dyn_set_ref(DYN_DICT_GET_I_REF(&tmp2, 0),
-                                        VM_STACK_REF(us_i));
+                        if (dyn_length(&tmp) == uc_len) {
+                            dyn_set_ref( DYN_DICT_GET_I_REF(&tmp2, 0),
+                                         VM_STACK_REF(us_i));
+                        }
                         us_i = 1;
                     }
                 }
@@ -519,20 +531,6 @@ case CALL_FCT:
                 dyn_move(&tmp2, dyn_list_push_none(env_stack));
 
                 goto L_SWITCH_END;
-
-            }
-            // Normal C-function
-            case 1: {
-                fct f = (fct) dyc_ptr->data.fct->ptr;
-                uc_i  = (*f)(&tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
-                break;
-            }
-            // System C-function
-            case 2: {
-                sys f = (sys) dyc_ptr->data.fct->ptr;
-                env->pc=pc;
-                uc_i  = (*f)(env, &tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
-                pc=env->pc;
             }
         }
 
@@ -575,10 +573,10 @@ case PROC:
     dyn_list_pop(env_stack, &tmp2);
 
     dyn_set_fct_ss(&tmp,
-                   &tmp2,
-                   us_len,
                    pc,
-                   cp_str);
+                   us_len,
+                   cp_str,
+                   &tmp2);
 
     pc += us_len;
 
@@ -936,12 +934,12 @@ default:
 L_SWITCH_END:
 
 env->pc = pc;
+
 if (pop) {
     dyn_list_popi(env_stack, 1);
     env->loc = NULL;
     pop = 0;
 }
-
 
 }while(1);
 /*---------------------------------------------------------------------------*/
@@ -1083,7 +1081,7 @@ dyn_c* vm_call_variable (vm_env* env, ss_str key)
     return dyn_dict_get(&env->memory, key);
 }
 
-ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, ss_char sys)
+ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, ss_ushort type)
 {
     dyn_c none;
     DYN_INIT(&none);
@@ -1091,7 +1089,7 @@ ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, 
     if (dyn_dict_insert(&env->functions, key, &none)) {
         if (dyn_set_fct(DYN_DICT_GET_I_REF(&env->functions,
                                             DYN_DICT_LEN((&env->functions))-1),
-                        ptr, sys+1, info))
+                        ptr, type, info))
             return 1;
     }
 

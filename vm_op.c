@@ -202,12 +202,12 @@ ss_char vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
 GOTO_FCT:
                     i = 1;
                     if (DYN_TYPE(fct) == FUNCTION) {
-                        switch (fct->data.fct->type) {
-                            case 0: dyn_set_string(rslt, "procedure");
-                                    break;
-                            case 1: dyn_set_string(rslt, "function");
-                                    break;
-                            case 2: dyn_set_string(rslt, "sytem-function");
+                        switch (fct->data.fct->tp) {
+                            case FCT_C:     dyn_set_string(rslt, "function");
+                                            break;
+                            case FCT_SYS:   dyn_set_string(rslt, "sytem-function");
+                                            break;
+                            default:        dyn_set_string(rslt, "procedure");                            
                         }
                         if (fct->data.fct->info != NULL) {
                             ss_strcat2(rslt->data.str, (ss_str)"\n");

@@ -23,6 +23,9 @@
 //typedef char (*ops) (dyn_c*, dyn_c[], ss_byte len);
 //typedef char (*sys) (vm_env*, dyn_c*, dyn_c[], unsigned char)
 
+#define FCT_C   0
+#define FCT_SYS 1
+
 typedef ss_char (*fct) (dyn_c*, dyn_c[], ss_byte);
 
 /**
@@ -74,7 +77,7 @@ dyn_c*  vm_get_rslt     (vm_env* env);
 ss_char vm_add_variable (vm_env* env, ss_str key, dyn_c* value);
 dyn_c*  vm_call_variable(vm_env* env, ss_str key);
 
-ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, ss_char sys);
+ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, ss_ushort type);
 ss_char vm_call_function(vm_env* env, ss_str key,
                          dyn_c* rslt, dyn_c params [],
                          ss_byte len);
