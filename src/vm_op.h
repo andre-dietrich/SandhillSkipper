@@ -29,5 +29,10 @@ ss_char ss_is_ex_fct    (dyn_c* rslt, dyn_c params[1], ss_byte len);
 
 ss_char ss_insert       (dyn_c* rslt, dyn_c params[3], ss_byte len);
 ss_char ss_remove       (dyn_c* rslt, dyn_c params[2], ss_byte len);
+ss_char ss_pop          (dyn_c* rslt, dyn_c params[2], ss_byte len);
+
+ss_uint hash            (ss_char* val, ss_ushort init);
+ss_char ss_hash         (dyn_c* rslt, dyn_c params[2], ss_byte len);
+
 
 #endif // VM_OP_C_H

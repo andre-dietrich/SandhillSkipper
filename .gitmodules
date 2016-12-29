@@ -1,0 +1,3 @@
+[submodule "src/dynamiC"]
+	path = src/dynamiC
+	url = https://github.com/ESS-OVGU/dynamiC

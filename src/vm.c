@@ -6,6 +6,9 @@
 #include "vm_opcode.h"
 #include "vm_trace.h"
 
+#ifdef ARDUNINO
+  #include <Arduino.h>
+#endif
 
 #define VM_STACK_LEN        stack->length
 #define VM_STACK_END        &stack->container[VM_STACK_LEN -1]
@@ -22,12 +25,6 @@
 #define IT_COUNT1           VM_STACK_REF(env->sp+3)
 #define IT_COUNT2           VM_STACK_REF(env->sp+4)
 
-#ifdef ARDUINO
-#include <Arduino.h>
-#define putc( C, weg) Serial.write(C)
-//#define FreeStatic
-//#include "ArduinoFreeRam.h"
-#endif
 
 dyn_c* find_local(dyn_list* stack, ss_ushort* start, ss_str id)
 {
@@ -54,7 +51,7 @@ dyn_c* find_local(dyn_list* stack, ss_ushort* start, ss_str id)
         pos = dyn_get_int(VM_STACK_REF(pos));
     }
 
-    return (dyn_c*) NULL;
+    return NULL;
 }
 
 char * get_data(char* base, ss_byte i)
@@ -75,44 +72,46 @@ vm_env* vm_init (ss_ushort memory_size,
     env->pc = NULL;
 
     DYN_INIT(&env->stack);
-    DYN_SET_LIST(&env->stack);
+    (void)DYN_SET_LIST(&env->stack);
 
     DYN_INIT(&env->rslt);
     dyn_set_none(&env->rslt);
 
     DYN_INIT(&env->memory);
-    dyn_set_dict(&env->memory, 5);
+    (void)dyn_set_dict(&env->memory, 1);
 
     DYN_INIT(&env->functions);
-    dyn_set_dict(&env->functions, 21);
+    dyn_set_dict(&env->functions, 24);
 
-    vm_add_function(env, (ss_str)"print", (void*)vm_sys_print,    NULL, FCT_SYS); //"print: prints out the passed parameters, the last defines the return value ...");
-//     vm_add_function(env, (ss_str)"help",  (void*)vm_sys_help,     (ss_str) "", 1); //"general help function ...");
-    vm_add_function(env, (ss_str)"mem",   (void*)vm_sys_mem,      NULL, FCT_SYS); //"show mem ...");
-    vm_add_function(env, (ss_str)"del",   (void*)vm_sys_del,      NULL, FCT_SYS); //"delete from memory ...");
+    vm_add_function(env, (ss_str)"print", (void*)vm_sys_print,    (ss_str) "", 1); //"print: prints out the passed parameters, the last defines the return value ...");
+    vm_add_function(env, (ss_str)"help",  (void*)vm_sys_help,     (ss_str) "", 1); //"general help function ...");
+    vm_add_function(env, (ss_str)"mem",   (void*)vm_sys_mem,      (ss_str) "", 1); //"show mem ...");
+    vm_add_function(env, (ss_str)"del",   (void*)vm_sys_del,      (ss_str) "", 1); //"delete from memory ...");
     /*------------------------------------------------------------------------*/
-    vm_add_function(env, (ss_str)"size",  (void*)ss_size_fct,     NULL, FCT_C); //"size");
-    vm_add_function(env, (ss_str)"float", (void*)ss_float_fct,    NULL, FCT_C); //"to float");
-    vm_add_function(env, (ss_str)"str",   (void*)ss_str_fct,      NULL, FCT_C); //"to string");
-    vm_add_function(env, (ss_str)"int",   (void*)ss_int_fct,      NULL, FCT_C); //"to int");
-    vm_add_function(env, (ss_str)"type",  (void*)ss_type_fct,     NULL, FCT_C); //"type");
-    vm_add_function(env, (ss_str)"len",   (void*)ss_len_fct,      NULL, FCT_C); //"length");
-    vm_add_function(env, (ss_str)"time",  (void*)ss_time_fct,     NULL, FCT_C); //"time");
+    vm_add_function(env, (ss_str)"size",  (void*)ss_size_fct,     (ss_str) "", 0); //"size");
+    vm_add_function(env, (ss_str)"float", (void*)ss_float_fct,    (ss_str) "", 0); //"to float");
+    vm_add_function(env, (ss_str)"str",   (void*)ss_str_fct,      (ss_str) "", 0); //"to string");
+    vm_add_function(env, (ss_str)"int",   (void*)ss_int_fct,      (ss_str) "", 0); //"to int");
+    vm_add_function(env, (ss_str)"type",  (void*)ss_type_fct,     (ss_str) "", 0); //"type");
+    vm_add_function(env, (ss_str)"len",   (void*)ss_len_fct,      (ss_str) "", 0); //"length");
+    vm_add_function(env, (ss_str)"time",  (void*)ss_time_fct,     (ss_str) "", 0); //"time");
 
-    vm_add_function(env, (ss_str)"none?", (void*)ss_is_none_fct,  NULL, FCT_C);
-    vm_add_function(env, (ss_str)"bool?", (void*)ss_is_bool_fct,  NULL, FCT_C);
-    vm_add_function(env, (ss_str)"int?",  (void*)ss_is_int_fct,   NULL, FCT_C);
-    vm_add_function(env, (ss_str)"float?",(void*)ss_is_float_fct, NULL, FCT_C);
-    vm_add_function(env, (ss_str)"str?",  (void*)ss_is_str_fct,   NULL, FCT_C);
-    vm_add_function(env, (ss_str)"list?", (void*)ss_is_list_fct,  NULL, FCT_C);
-    vm_add_function(env, (ss_str)"dict?", (void*)ss_is_dict_fct,  NULL, FCT_C);
-    vm_add_function(env, (ss_str)"proc?", (void*)ss_is_proc_fct,  NULL, FCT_C);
-    vm_add_function(env, (ss_str)"ex?",   (void*)ss_is_ex_fct,    NULL, FCT_C);
+    vm_add_function(env, (ss_str)"none?", (void*)ss_is_none_fct,  (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"bool?", (void*)ss_is_bool_fct,  (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"int?",  (void*)ss_is_int_fct,   (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"float?",(void*)ss_is_float_fct, (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"str?",  (void*)ss_is_str_fct,   (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"list?", (void*)ss_is_list_fct,  (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"dict?", (void*)ss_is_dict_fct,  (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"proc?", (void*)ss_is_proc_fct,  (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"ex?",   (void*)ss_is_ex_fct,    (ss_str) "", 0);
 
-    vm_add_function(env, (ss_str)"insert",(void*)ss_insert,       NULL, FCT_C);
-    vm_add_function(env, (ss_str)"remove",(void*)ss_remove,       NULL, FCT_C);
+    vm_add_function(env, (ss_str)"insert",(void*)ss_insert,       (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"remove",(void*)ss_remove,       (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"pop",   (void*)ss_pop,          (ss_str) "", 0);
+    vm_add_function(env, (ss_str)"hash",  (void*)ss_hash,         (ss_str) "", 0);
 
-    env->loc = NULL;
+    env->loc  = NULL;
     env->data = NULL;
 
     env->status = VM_OK;
@@ -120,8 +119,41 @@ vm_env* vm_init (ss_ushort memory_size,
 
     env->memory_size = memory_size;
     env->stack_size  = stack_size;
+
     return env;
 }
+
+
+vm_env* vm_init2(vm_env*   main_env,
+                 ss_ushort stack_size,
+                 ss_ushort execution_steps)
+{
+    vm_env* env = (vm_env*) malloc(sizeof(vm_env));
+
+    env->pc = NULL;
+
+    DYN_INIT(&env->stack);
+    (void)DYN_SET_LIST(&env->stack);
+
+    DYN_INIT(&env->rslt);
+    dyn_set_none(&env->rslt);
+
+    env->memory    = main_env->memory;
+    env->functions = main_env->functions;
+
+    env->loc  = NULL;
+    env->data = NULL;
+
+    env->status = VM_OK;
+    env->execution_steps = execution_steps ? ++execution_steps : 0;
+
+    env->memory_size = main_env->memory_size;
+    env->stack_size  = stack_size;
+
+    return env;
+}
+
+
 
 ss_char vm_execute (vm_env* env, ss_char* code, ss_char trace) {
 
@@ -164,6 +196,8 @@ do{
     dyn_free(&tmp2);
     dyc_ptr = NULL;
 
+    //fprintf(stderr, "FFFFFFFFFFFFFFFF \n");
+
     if (env->status != VM_IDLE) {
         us_i = env->sp;
         dyc_ptr = find_local(stack, &us_i, VM_TRY);
@@ -193,6 +227,10 @@ do{
 
 switch( uc_i = (ss_byte)(POP_I & *pc++)){
 /*---------------------------------------------------------------------------*/
+case RETX:
+    dyn_list_popi(env_stack, VM_STACK_LEN - env->sp - 3);
+    //vm_printf(dyn_get_string(env_stack), 1);
+
 case RET:
 case RET_P:
 /*---------------------------------------------------------------------------*/
@@ -244,6 +282,15 @@ case SP_SAVE:
     dyn_list_push_none(env_stack);
 
 LABEL_SP:
+
+    uc_len = (ss_byte)*pc++;
+    if (uc_len) {
+        if (DYN_IS_NONE(VM_STACK_END))
+            dyn_set_dict(VM_STACK_END, uc_len);
+        else
+            dyn_dict_resize(VM_STACK_END, uc_len);
+    }
+
     dyn_set_int(&tmp, env->sp);
     env->sp = VM_STACK_LEN;
     goto GOTO__PUSH_TMP;
@@ -420,12 +467,10 @@ case STORE:
 /*---------------------------------------------------------------------------*/
     cp_str = VM_DATA((ss_byte)*pc++);
 
-    dyn_move(VM_STACK_END, &tmp);
+    dyc_ptr = dyn_dict_insert(&env->memory, cp_str, &tmp);
 
-    dyn_set_ref(VM_STACK_END, dyn_dict_insert(&env->memory, cp_str, &tmp));
-
-    //fprintf(stderr, "%s\n", );
-
+    dyn_move(VM_STACK_END, dyc_ptr);
+    dyn_set_ref(VM_STACK_END, dyc_ptr);
     break;
 
 /*---------------------------------------------------------------------------*/
@@ -451,9 +496,8 @@ case STORE_LOC:
     dyc_ptr = find_local(stack, &us_i, cp_str);
 
     if (!dyc_ptr) {
-        if (DYN_IS_NONE(VM_LOCAL))
-            dyn_set_dict(VM_LOCAL, 1);
-
+        //if (DYN_IS_NONE(VM_LOCAL))
+        //    dyn_set_dict(VM_LOCAL, 1);
         dyc_ptr = dyn_dict_insert(VM_LOCAL, cp_str, &tmp);
     }
 
@@ -477,34 +521,23 @@ case CALL_FCT:
         dyc_ptr = dyc_ptr->data.ref;
 
     if (DYN_TYPE(dyc_ptr) == FUNCTION) {
-        switch (dyc_ptr->data.fct->tp) {
-            // Normal C-function
-            case FCT_C: {
-                fct f = (fct) dyc_ptr->data.fct->ptr;
-                uc_i  = (*f)(&tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
-                break;
-            }
-            // System C-function
-            case FCT_SYS: {
-                sys f = (sys) dyc_ptr->data.fct->ptr;
-                env->pc=pc;
-                uc_i  = (*f)(env, &tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
-                pc=env->pc;
-                break;
-            }
+        switch (dyc_ptr->data.fct->type) {
             // PROCEDURE
-            default: {
-                dyn_copy((dyn_c*)dyc_ptr->data.fct->params, &tmp2);
+            case 0: {
+
+                dyn_proc *proc = (dyn_proc*) dyc_ptr->data.fct->ptr;
+
+                dyn_copy(&proc->params, &tmp2);
 
                 us_len = VM_STACK_LEN - uc_len - 1;
 
                 us_i = 0;
-                if (DYN_NOT_NONE(&tmp2)) {
+                if (DYN_NOT_NONE(&proc->params)) {
+                    // todo optimize
                     if (DYN_DICT_GET_I_KEY(&tmp2, 0)[0] == 0) {
-                        if (dyn_length(&tmp) == uc_len) {
-                            dyn_set_ref( DYN_DICT_GET_I_REF(&tmp2, 0),
-                                         VM_STACK_REF(us_i));
-                        }
+                        if (DYN_DICT_LEN((&proc->params)) == uc_len)
+                            dyn_set_ref(DYN_DICT_GET_I_REF(&tmp2, 0),
+                                        VM_STACK_REF(us_i));
                         us_i = 1;
                     }
                 }
@@ -531,6 +564,20 @@ case CALL_FCT:
                 dyn_move(&tmp2, dyn_list_push_none(env_stack));
 
                 goto L_SWITCH_END;
+
+            }
+            // Normal C-function
+            case 1: {
+                fct f = (fct) dyc_ptr->data.fct->ptr;
+                uc_i  = (*f)(&tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
+                break;
+            }
+            // System C-function
+            case 2: {
+                sys f = (sys) dyc_ptr->data.fct->ptr;
+                env->pc=pc;
+                uc_i  = (*f)(env, &tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
+                pc=env->pc;
             }
         }
 
@@ -573,10 +620,10 @@ case PROC:
     dyn_list_pop(env_stack, &tmp2);
 
     dyn_set_fct_ss(&tmp,
-                   pc,
+                   &tmp2,
                    us_len,
-                   cp_str,
-                   &tmp2);
+                   pc,
+                   cp_str);
 
     pc += us_len;
 
@@ -659,6 +706,143 @@ case IT_INIT:
     break;
 
 /*---------------------------------------------------------------------------*/
+case IT_INITX:
+/*---------------------------------------------------------------------------*/
+
+    us_i = dyn_get_int(VM_STACK_REF(env->sp));
+
+    dyc_ptr = VM_STACK_REF(us_i - 1);
+
+    uc_len = DYN_DICT_LEN(dyc_ptr);
+
+    for (uc_i=0; uc_i<uc_len; ++uc_i)
+        dyn_dict_insert(VM_LOCAL, dyc_ptr->data.dict->key[uc_i], dyn_dict_get_i_ref(dyc_ptr, uc_i));
+
+    if ( DYN_TYPE(VM_STACK_REF(us_i +1)) == DICT )
+        dyn_set_int(&tmp, us_i +1);
+    else
+        dyn_copy(VM_STACK_REF(us_i +1), &tmp);
+
+    dyn_list_push(env_stack, &tmp);
+
+    dyn_set_list_len(&tmp, 10);
+    dyn_list_push(env_stack, &tmp);
+
+    dyn_set_int(&tmp, 0);
+    dyn_list_push(env_stack, &tmp);
+
+    dyn_set_int(&tmp, 1 + dyn_get_int(VM_STACK_REF(4+dyn_get_int(VM_STACK_REF(env->sp)))));
+
+    dyn_list_push(env_stack, &tmp);
+
+    break;
+
+/*---------------------------------------------------------------------------*/
+case IT_STOREX:
+/*---------------------------------------------------------------------------*/
+    dyn_list_push(IT_LIST, VM_STACK_END);
+
+    break;
+
+/*---------------------------------------------------------------------------*/
+case IT_STOREX2:
+/*---------------------------------------------------------------------------*/
+
+    us_len = dyn_length(VM_STACK_END);
+
+
+    if (us_len) {
+        ss_ushort i, len;
+        for(us_i = 0; us_i < us_len; ++us_i) {
+            dyn_copy(VM_STACK_REF(env->sp + 5), &tmp);
+            dyc_ptr = DYN_LIST_GET_REF(VM_STACK_END, us_i);
+            len = dyn_length(dyc_ptr);
+            for (i=0; i<len; ++i)
+                dyn_list_push(&tmp, DYN_LIST_GET_REF(dyc_ptr, i));
+
+
+            //dyn_list_insert(DYN_LIST_GET_REF(dyc_ptr, us_i), &tmp, 0);
+            dyn_move(&tmp, dyn_list_push_none(IT_LIST));
+        }
+    }
+    dyn_list_popi(env_stack, 1);
+
+    break;
+
+/*---------------------------------------------------------------------------*/
+case IT_CYCLE:
+/*---------------------------------------------------------------------------*/
+    us_len = dyn_get_int(IT_COUNT2);
+    us_i = dyn_get_int(VM_STACK_REF(env->sp));
+    dyn_set_bool(&tmp, 1);
+
+    while (us_len--) {
+        dyn_set_ref(&tmp, VM_STACK_REF(us_i+5));
+        dyn_op_ne(&tmp, VM_STACK_END);
+        if (!dyn_get_bool(&tmp)) {
+            dyn_list_popi(env_stack, 1);
+            break;
+        }
+        us_i = dyn_get_int(VM_STACK_REF(us_i));
+    }
+
+    dyn_list_push(env_stack, &tmp);
+    break;
+
+/*---------------------------------------------------------------------------*/
+case IT_UNIQUE:
+/*---------------------------------------------------------------------------*/
+    cp_str = dyn_get_string(VM_STACK_END);
+
+    dyn_set_int(&tmp, hash(cp_str, 0));
+    dyn_set_ref(&tmp2, &tmp);
+
+    free(cp_str);
+
+    dyc_ptr = dyn_dict_get(&env->memory, (ss_str)"__uniq");
+
+    //fprintf(stderr, "%s\n", dyn_get_string(dyc_ptr));
+
+    dyn_op_in(&tmp2, dyc_ptr);
+    if (dyn_get_bool(&tmp2))
+        dyn_list_popi(env_stack, 1);
+    else
+        dyn_list_push(dyc_ptr, &tmp);
+
+    dyn_op_not(&tmp2);
+
+    dyn_list_push(env_stack, &tmp2);
+    break;
+
+/*---------------------------------------------------------------------------*/
+case CHK_FIRST:
+/*---------------------------------------------------------------------------*/
+    dyn_set_bool(&tmp, 1);
+    if (!dyn_get_int(IT_COUNT2)) {
+        if(!dyn_get_int(IT_COUNT1))
+            dyn_set_bool(&tmp, 0);
+    }
+
+
+    dyn_list_push(env_stack, &tmp);
+
+    //dyn_set_bool(dyn_list_push_none(env_stack), 0 == dyn_get_int(IT_COUNT2));
+    break;
+
+/*---------------------------------------------------------------------------*/
+case LOC_STEP:
+/*---------------------------------------------------------------------------*/
+    dyn_list_push(env_stack, IT_COUNT2);
+
+    break;
+
+/*---------------------------------------------------------------------------*/
+case LOC_COUNT:
+/*---------------------------------------------------------------------------*/
+    dyn_list_push(env_stack, IT_COUNT1);
+
+    break;
+/*---------------------------------------------------------------------------*/
 case IT_NEXT0:
 case IT_NEXT1:
 case IT_NEXT2:
@@ -672,7 +856,9 @@ case IT_NEXT3:
 
     switch (uc_i) {
         case IT_NEXT0: {
-            if (vm_get_iterator (VM_LOCAL, IT_DATA, i_i)) {
+            if (vm_get_iterator (VM_LOCAL, DYN_TYPE(IT_DATA) == DICT
+                                           ? IT_DATA
+                                           : VM_STACK_REF(dyn_get_int(IT_DATA)), i_i)) {
                 dyn_set_int(dyc_ptr2, i_i+1);
                 dyn_set_bool(&tmp, 1);
             }
@@ -934,12 +1120,12 @@ default:
 L_SWITCH_END:
 
 env->pc = pc;
-
 if (pop) {
     dyn_list_popi(env_stack, 1);
     env->loc = NULL;
     pop = 0;
 }
+
 
 }while(1);
 /*---------------------------------------------------------------------------*/
@@ -1081,7 +1267,7 @@ dyn_c* vm_call_variable (vm_env* env, ss_str key)
     return dyn_dict_get(&env->memory, key);
 }
 
-ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, ss_ushort type)
+ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, ss_char sys)
 {
     dyn_c none;
     DYN_INIT(&none);
@@ -1089,7 +1275,7 @@ ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, 
     if (dyn_dict_insert(&env->functions, key, &none)) {
         if (dyn_set_fct(DYN_DICT_GET_I_REF(&env->functions,
                                             DYN_DICT_LEN((&env->functions))-1),
-                        ptr, type, info))
+                        ptr, sys+1, info))
             return 1;
     }
 
@@ -1119,18 +1305,23 @@ ss_char vm_call_function (vm_env* env, ss_str key, dyn_c* rslt, dyn_c params[], 
         }
     }
 
+
+
     return 0;
 }
 
 void  vm_printf (ss_str str, ss_char newline)
 {
+#ifdef ARDUNINO
+    if (newline)
+        Serial.println(str);
+    else
+        Serial.print(str);
+#else
     for (; *str!='\0'; putc(*str++, stderr));
     if (newline)
         putc('\n', stderr);
-    //if (newline)
-    //    Serial.println(str);
-    //else
-    //    Serial.print(str);
+#endif
 }
 
 

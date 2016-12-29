@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 
+/*
 #ifdef ARDUINO
     #define ss_println(X) Serial.println(X)
     #define ss_print(X) Serial.print(X)
@@ -18,6 +19,7 @@
     //#define ss_println(X) fprintf(stderr, "%s\n", X)
     //#define ss_print(X)   fprintf(stderr, "%s",   X)
 #endif
+*/
 
 //#define S2_DEBUG
 //#define S2_LIST

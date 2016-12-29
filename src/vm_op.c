@@ -83,6 +83,46 @@ GOTO_NRM:   status = dyn_op_in(rslt, op);
 };
 
 
+/*
+ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
+{
+    ss_char status = VM_OK;
+    ss_short i = -1;
+    ss_short j = 0;
+
+    dyn_c *first = op;
+
+    if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
+    if (DYN_NOT_NONE(rslt)) {
+        first = rslt;
+        goto GOTO_NRM;
+    }
+
+    while (++i < len && status) {
+        first = DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_END(op->data.ref) : op;
+
+        for(j=i; j<=len && status; ++j) {
+
+            dyn_set_ref(rslt, first);
+
+            if (DYN_TYPE(++op) == MISCELLANEOUS)
+GOTO_REC:       status = op_NE(rslt, op->data.ref->data.list->container,
+                                     DYN_LIST_LEN(op->data.ref));
+            else
+GOTO_NRM:       status = dyn_op_ne(rslt, op);
+
+            if (!rslt->data.b)
+                return status;
+        }
+
+        op = first+1;
+    }
+
+    return status;
+};
+*/
+
+
 ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
 {
     ss_char status = VM_OK;
@@ -202,12 +242,12 @@ ss_char vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
 GOTO_FCT:
                     i = 1;
                     if (DYN_TYPE(fct) == FUNCTION) {
-                        switch (fct->data.fct->tp) {
-                            case FCT_C:     dyn_set_string(rslt, "function");
-                                            break;
-                            case FCT_SYS:   dyn_set_string(rslt, "sytem-function");
-                                            break;
-                            default:        dyn_set_string(rslt, "procedure");                            
+                        switch (fct->data.fct->type) {
+                            case 0: dyn_set_string(rslt, "procedure");
+                                    break;
+                            case 1: dyn_set_string(rslt, "function");
+                                    break;
+                            case 2: dyn_set_string(rslt, "sytem-function");
                         }
                         if (fct->data.fct->info != NULL) {
                             ss_strcat2(rslt->data.str, (ss_str)"\n");
@@ -338,7 +378,6 @@ char ss_float_fct  (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_float(
 char ss_int_fct    (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_int  (rslt, dyn_get_int(&params[0]));   return 1; }
 char ss_type_fct   (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_int  (rslt, dyn_type(&params[0]));      return 1; }
 char ss_len_fct    (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_int  (rslt, dyn_length(&params[0]));    return 1; }
-char ss_time_fct   (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_int  (rslt, 0);                         return 1; }
 char ss_str_fct    (dyn_c* rslt, dyn_c params[1], ss_byte len)  {
 
     ss_str str = dyn_get_string(&params[0]);
@@ -378,5 +417,58 @@ char ss_remove       (dyn_c* rslt, dyn_c params[2], ss_byte len)  {
 
         return VM_OK;
     }
+    return VM_ERROR;
+}
+
+char ss_pop       (dyn_c* rslt, dyn_c params[2], ss_byte len)  {
+    if (len)
+    {
+        dyn_copy(params, rslt);
+        dyn_list_popi(rslt,1);
+
+        return VM_OK;
+    }
+    return VM_ERROR;
+}
+
+#ifdef ARDUNINO
+    #include <Arduino.h>
+#else
+    #include <time.h>
+#endif
+
+char ss_time_fct (dyn_c* rslt, dyn_c params[1], ss_byte len)  {
+
+#ifdef ARDUNINO
+    dyn_set_float(rslt, (float) millis());
+#else
+    dyn_set_float(rslt, ((float) clock()) / CLOCKS_PER_SEC);
+#endif
+
+    return 1;
+}
+
+ss_uint hash(ss_char *val, ss_ushort init) {
+    ss_uint has = 5381;
+    while(*val)
+        has = 33 * has + *val++;
+
+    return has+init;
+}
+
+char ss_hash (dyn_c* rslt, dyn_c params[2], ss_byte len)  {
+
+    if (len) {
+        ss_str  val = dyn_get_string(params);
+        ss_uint has = hash(val, DYN_TYPE(params));
+        free(val);
+
+        if(len == 2) {
+            has = has % (ss_uint) dyn_get_int(&params[1]);
+        }
+        dyn_set_int(rslt, has);
+        return VM_OK;
+    }
+
     return VM_ERROR;
 }

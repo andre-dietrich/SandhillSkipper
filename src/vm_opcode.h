@@ -69,6 +69,16 @@
 
 #define REF         41
 
+#define IT_INITX    42
+#define IT_STOREX   43
+#define CHK_FIRST   44
+#define RETX        45
+#define IT_STOREX2  46
+
+#define LOC_STEP    47
+#define LOC_COUNT   48
+#define IT_CYCLE    49
+#define IT_UNIQUE   50
 
 #define OP          0b01000000
 #define OPX         0b01100000

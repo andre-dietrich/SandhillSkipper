@@ -5,17 +5,17 @@ ECHO	 = echo
 
 DEFINES= -DS2_LIST -DS2_SET -DS2_DEBUG
 
-CFLAGS = -Wall -g -I./dynamic $(DEFINES) #-Os
-OBJLIB = lib2s.so
+CFLAGS = -Wall -g -I./src -I./src/dynamiC/src $(DEFINES) #-Os
+OBJLIB = libS2.so
 
-SRC  = $(wildcard vm*.c)
+SRC  = $(wildcard src/vm*.c)
 OBJ  = $(patsubst %.c,%.o,$(SRC))
 
-DYN_SRC = $(wildcard ./dynamic/*.c)
+DYN_SRC = $(wildcard src/dynamiC/*.c)
 DYN_OBJ = $(patsubst %.c,%.o,$(DYN_SRC))
 
-EXE	 = main.out
-MAIN = main.c
+EXE	 = src/main.out
+MAIN = src/main.c
 
 .PHONY: all test clean
 
