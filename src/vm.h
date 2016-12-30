@@ -14,7 +14,7 @@
 
 //#include "dynamic_types.h"
 #include "dynamic.h"
-#include "ss_string.h"
+//#include "dynamic_string.h"
 
 #include "vm_defines.h"
 #include "vm_opcode.h"

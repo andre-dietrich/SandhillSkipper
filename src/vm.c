@@ -88,28 +88,28 @@ vm_env* vm_init (dyn_ushort memory_size,
     vm_add_function(env, (dyn_str)"mem",   (void*)vm_sys_mem,      (dyn_str) "", 1); //"show mem ...");
     vm_add_function(env, (dyn_str)"del",   (void*)vm_sys_del,      (dyn_str) "", 1); //"delete from memory ...");
     /*------------------------------------------------------------------------*/
-    vm_add_function(env, (dyn_str)"size",  (void*)ss_size_fct,     (dyn_str) "", 0); //"size");
-    vm_add_function(env, (dyn_str)"float", (void*)ss_float_fct,    (dyn_str) "", 0); //"to float");
-    vm_add_function(env, (dyn_str)"str",   (void*)ss_str_fct,      (dyn_str) "", 0); //"to string");
-    vm_add_function(env, (dyn_str)"int",   (void*)ss_int_fct,      (dyn_str) "", 0); //"to int");
-    vm_add_function(env, (dyn_str)"type",  (void*)ss_type_fct,     (dyn_str) "", 0); //"type");
-    vm_add_function(env, (dyn_str)"len",   (void*)ss_len_fct,      (dyn_str) "", 0); //"length");
-    vm_add_function(env, (dyn_str)"time",  (void*)ss_time_fct,     (dyn_str) "", 0); //"time");
+    vm_add_function(env, (dyn_str)"size",  (void*)fct_size,     (dyn_str) "", 0); //"size");
+    vm_add_function(env, (dyn_str)"float", (void*)fct_float,    (dyn_str) "", 0); //"to float");
+    vm_add_function(env, (dyn_str)"str",   (void*)fct_str,      (dyn_str) "", 0); //"to string");
+    vm_add_function(env, (dyn_str)"int",   (void*)fct_int,      (dyn_str) "", 0); //"to int");
+    vm_add_function(env, (dyn_str)"type",  (void*)fct_type,     (dyn_str) "", 0); //"type");
+    vm_add_function(env, (dyn_str)"len",   (void*)fct_len,      (dyn_str) "", 0); //"length");
+    vm_add_function(env, (dyn_str)"time",  (void*)fct_time,     (dyn_str) "", 0); //"time");
 
-    vm_add_function(env, (dyn_str)"none?", (void*)ss_is_none_fct,  (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"bool?", (void*)ss_is_bool_fct,  (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"int?",  (void*)ss_is_int_fct,   (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"float?",(void*)ss_is_float_fct, (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"str?",  (void*)ss_is_str_fct,   (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"list?", (void*)ss_is_list_fct,  (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"dict?", (void*)ss_is_dict_fct,  (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"proc?", (void*)ss_is_proc_fct,  (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"ex?",   (void*)ss_is_ex_fct,    (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"none?", (void*)fct_is_none,  (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"bool?", (void*)fct_is_bool,  (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"int?",  (void*)fct_is_int,   (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"float?",(void*)fct_is_float, (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"str?",  (void*)fct_is_str,   (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"list?", (void*)fct_is_list,  (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"dict?", (void*)fct_is_dict,  (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"proc?", (void*)fct_is_proc,  (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"ex?",   (void*)fct_is_ex,    (dyn_str) "", 0);
 
-    vm_add_function(env, (dyn_str)"insert",(void*)ss_insert,       (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"remove",(void*)ss_remove,       (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"pop",   (void*)ss_pop,          (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"hash",  (void*)ss_hash,         (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"insert",(void*)fct_insert,       (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"remove",(void*)fct_remove,       (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"pop",   (void*)fct_pop,          (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"hash",  (void*)fct_hash,         (dyn_str) "", 0);
 
     env->loc  = NULL;
     env->data = NULL;
