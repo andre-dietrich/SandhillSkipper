@@ -35,8 +35,8 @@ run: all
 		./$(EXE)
 
 clean:
-		cd dynamic; make clean
 		$(RM) -f *.out *.o *.so
+		cd src; $(RM) -f *.out *.o *.so
 
 doc:
 		doxygen

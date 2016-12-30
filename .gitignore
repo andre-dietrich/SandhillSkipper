@@ -1,0 +1,4 @@
+libS2.so
+src/vm_trace.o
+src/vm_op.o
+src/vm.o

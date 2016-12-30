@@ -1,17 +1,17 @@
 #include "vm_op.h"
 
-typedef ss_char (*unary)  (dyn_c*);
-typedef ss_char (*binary) (dyn_c*, dyn_c*);
+typedef trilean (*unary)  (dyn_c*);
+typedef trilean (*binary) (dyn_c*, dyn_c*);
 
-ss_char op_unary( dyn_c *rslt, dyn_c op[], unary fct )
+trilean op_unary( dyn_c *rslt, dyn_c op[], unary fct )
 {
     dyn_set_ref(rslt, op);
     return (*fct)(rslt);
 };
 
-ss_char op_binary(dyn_c *rslt, dyn_c op[], ss_byte len, binary fct, ss_byte shortcut)
+trilean op_binary(dyn_c *rslt, dyn_c op[], dyn_byte len, binary fct, dyn_byte shortcut)
 {
-    ss_char status = VM_OK;
+    trilean status = DYN_TRUE;
     if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
     if (DYN_TYPE(rslt))                goto GOTO_NRM;
 
@@ -36,9 +36,9 @@ GOTO_NRM:   status = (*fct)(rslt, op);
     return status;
 }
 
-ss_char op_binary2(dyn_c *rslt, dyn_c op[], ss_byte len, binary fct)
+trilean op_binary2(dyn_c *rslt, dyn_c op[], dyn_byte len, binary fct)
 {
-    ss_char status = VM_OK;
+    trilean status = DYN_TRUE;
     if (DYN_TYPE(op) == MISCELLANEOUS) goto GOTO_REC;
     if (DYN_TYPE(rslt))                goto GOTO_NRM;
 
@@ -56,9 +56,9 @@ GOTO_NRM:   status = (*fct)(rslt, op);
 };
 
 
-ss_char op_IN (dyn_c *rslt, dyn_c op[], ss_byte len)
+trilean op_IN (dyn_c *rslt, dyn_c op[], dyn_byte len)
 {
-    ss_char status = VM_OK;
+    trilean status = DYN_TRUE;
 
     dyn_c *first = DYN_TYPE(op) == MISCELLANEOUS ? DYN_LIST_GET_REF(op->data.ref, 0) : op;
 
@@ -84,11 +84,11 @@ GOTO_NRM:   status = dyn_op_in(rslt, op);
 
 
 /*
-ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
+trilean op_NE(dyn_c *rslt, dyn_c op[], dyn_byte len)
 {
-    ss_char status = VM_OK;
-    ss_short i = -1;
-    ss_short j = 0;
+    trilean status = DYN_TRUE;
+    dyn_short i = -1;
+    dyn_short j = 0;
 
     dyn_c *first = op;
 
@@ -123,10 +123,10 @@ GOTO_NRM:       status = dyn_op_ne(rslt, op);
 */
 
 
-ss_char op_NE(dyn_c *rslt, dyn_c op[], ss_byte len)
+trilean op_NE(dyn_c *rslt, dyn_c op[], dyn_byte len)
 {
-    ss_char status = VM_OK;
-    ss_short i;
+    trilean status = DYN_TRUE;
+    dyn_short i;
 
     dyn_c *first = op;
 
@@ -157,7 +157,7 @@ GOTO_NRM:       status = dyn_op_ne(rslt, op);
 };
 
 
-ss_char vm_op_dispatch (dyn_c *rslt, dyn_c op[], ss_byte len, ss_byte op_id)
+trilean vm_op_dispatch (dyn_c *rslt, dyn_c op[], dyn_byte len, dyn_byte op_id)
 {
     switch (op_id) {
         case ADD:   return op_binary(rslt, op, len, &dyn_op_add, 0);
@@ -194,21 +194,21 @@ ss_char vm_op_dispatch (dyn_c *rslt, dyn_c op[], ss_byte len, ss_byte op_id)
                 if (DYN_TYPE(op->data.ref) == LIST) {
                     dyn_set_ref(rslt,op);
                     rslt->type = MISCELLANEOUS;
-                    return VM_OK;
+                    return DYN_TRUE;
                 }
             }
-            return VM_ERROR;
+            return DYN_FALSE;
         }
     }
 
     dyn_free(rslt);
-    return VM_ERROR;
+    return DYN_FALSE;
 };
 
 
-ss_char vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
+trilean vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)
 {
-    ss_ushort i;
+    dyn_ushort i;
     dyn_c none;
     DYN_INIT(&none);
 
@@ -230,7 +230,7 @@ ss_char vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
     }
     else {
         dyn_c *fct;
-        ss_str fct_name = NULL;
+        dyn_str fct_name = NULL;
 
         if (DYN_TYPE(params->data.ref) == STRING) {
             fct_name = dyn_get_string(&params[0]);
@@ -250,7 +250,7 @@ GOTO_FCT:
                             case 2: dyn_set_string(rslt, "sytem-function");
                         }
                         if (fct->data.fct->info != NULL) {
-                            ss_strcat2(rslt->data.str, (ss_str)"\n");
+                            ss_strcat2(rslt->data.str, (dyn_str)"\n");
                             ss_strcat2(rslt->data.str, fct->data.fct->info);
                         }
                     }
@@ -283,10 +283,10 @@ GOTO_FCT:
         }
     }
 */
-    return VM_OK;
+    return DYN_TRUE;
 }
 
-ss_char vm_sys_print (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
+trilean vm_sys_print (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)
 {
     // store last element
     if (len)
@@ -296,24 +296,24 @@ ss_char vm_sys_print (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
         goto LABEL_OK;
     }
     {
-        ss_str str = NULL;
-        ss_byte i;
+        dyn_str str = NULL;
+        dyn_byte i;
         for (i=0; i<len; ++i) {
             str = dyn_get_string(&params[i]);
             vm_printf(str, 0);
             free(str);
-            vm_printf((ss_str)" ", 0);
+            vm_printf((dyn_str)" ", 0);
         }
     }
 LABEL_OK:
-    vm_printf((ss_str)"", 1);
-    return VM_OK;
+    vm_printf((dyn_str)"", 1);
+    return DYN_TRUE;
 }
 
-ss_char vm_sys_mem (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
+trilean vm_sys_mem (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)
 {
     if (len) {
-        ss_str id = dyn_get_string(&params[0]);
+        dyn_str id = dyn_get_string(&params[0]);
 
         if (dyn_dict_has_key(&env->memory, id)) {
             dyn_set_bool(rslt, 1);
@@ -328,8 +328,8 @@ ss_char vm_sys_mem (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
         dyn_c none;
         DYN_INIT(&none);
 
-        ss_ushort len = DYN_DICT_SPACE(env->memory.data.dict);
-        ss_ushort i;
+        dyn_ushort len = DYN_DICT_SPACE(env->memory.data.dict);
+        dyn_ushort i;
         for (i=0; i<len; ++i) {
             if(DYN_DICT_GET_I_KEY(&env->memory, i)) {
                 dyn_list_push(rslt, &none);
@@ -339,17 +339,17 @@ ss_char vm_sys_mem (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
         }
     }
 
-    return VM_OK;
+    return DYN_TRUE;
 }
 
-ss_char vm_sys_del (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
+trilean vm_sys_del (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)
 {
     if (len) {
-        ss_char status = VM_OK;
-        ss_byte i;
+        trilean status = DYN_TRUE;
+        dyn_byte i;
 
 
-        ss_str str = dyn_get_string(&params[len-1]);
+        dyn_str str = dyn_get_string(&params[len-1]);
 
         i = dyn_dict_has_key(&env->memory, str);
         free(str);
@@ -357,7 +357,7 @@ ss_char vm_sys_del (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
         if (i)
             dyn_move(DYN_DICT_GET_I_REF(&env->memory, i-1), rslt);
         else
-            return VM_ERROR;
+            return DYN_FALSE;
 
         for (i=0; i<len && status; ++i) {
             str = dyn_get_string(&params[i]);
@@ -370,65 +370,65 @@ ss_char vm_sys_del (vm_env* env, dyn_c* rslt, dyn_c params [], ss_byte len)
 
     dyn_free(rslt);
     dyn_dict_empty(&env->memory);
-    return VM_OK;
+    return DYN_TRUE;
 }
 
-char ss_size_fct   (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_int  (rslt, dyn_size(&params[0]));      return 1; }
-char ss_float_fct  (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_float(rslt, dyn_get_float(&params[0])); return 1; }
-char ss_int_fct    (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_int  (rslt, dyn_get_int(&params[0]));   return 1; }
-char ss_type_fct   (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_int  (rslt, dyn_type(&params[0]));      return 1; }
-char ss_len_fct    (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_int  (rslt, dyn_length(&params[0]));    return 1; }
-char ss_str_fct    (dyn_c* rslt, dyn_c params[1], ss_byte len)  {
+trilean ss_size_fct   (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_int  (rslt, dyn_size(&params[0]));      return 1; }
+trilean ss_float_fct  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_float(rslt, dyn_get_float(&params[0])); return 1; }
+trilean ss_int_fct    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_int  (rslt, dyn_get_int(&params[0]));   return 1; }
+trilean ss_type_fct   (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_int  (rslt, dyn_type(&params[0]));      return 1; }
+trilean ss_len_fct    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_int  (rslt, dyn_length(&params[0]));    return 1; }
+trilean ss_str_fct    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  {
 
-    ss_str str = dyn_get_string(&params[0]);
+    dyn_str str = dyn_get_string(&params[0]);
     dyn_set_string(rslt, str);
     free(str);
-    return VM_OK;
+    return DYN_TRUE;
 }
 
 #define VM_TYPE(X)   (DYN_IS_REFERENCE(X) ? DYN_TYPE((X)->data.ref) : DYN_TYPE(X))
 
-char ss_is_none_fct  (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == NONE);      return 1; }
-char ss_is_bool_fct  (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == BOOL);      return 1; }
-char ss_is_int_fct   (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == INTEGER);   return 1; }
-char ss_is_float_fct (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == FLOAT);     return 1; }
-char ss_is_str_fct   (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == STRING);    return 1; }
-char ss_is_list_fct  (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == LIST);      return 1; }
-char ss_is_dict_fct  (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == DICT);      return 1; }
-char ss_is_proc_fct  (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == FUNCTION);  return 1; }
-char ss_is_ex_fct    (dyn_c* rslt, dyn_c params[1], ss_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == EXTERN);    return 1; }
+trilean ss_is_none_fct  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == NONE);      return 1; }
+trilean ss_is_bool_fct  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == BOOL);      return 1; }
+trilean ss_is_int_fct   (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == INTEGER);   return 1; }
+trilean ss_is_float_fct (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == FLOAT);     return 1; }
+trilean ss_is_str_fct   (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == STRING);    return 1; }
+trilean ss_is_list_fct  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == LIST);      return 1; }
+trilean ss_is_dict_fct  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == DICT);      return 1; }
+trilean ss_is_proc_fct  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == FUNCTION);  return 1; }
+trilean ss_is_ex_fct    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == EXTERN);    return 1; }
 
-char ss_insert       (dyn_c* rslt, dyn_c params[3], ss_byte len)  {
+trilean ss_insert       (dyn_c* rslt, dyn_c params[3], dyn_byte len)  {
     if (len == 3)
     {
         dyn_move(&params[0], rslt);
         dyn_list_insert(rslt, &params[1], dyn_get_int(&params[2]));
 
-        return VM_OK;
+        return DYN_TRUE;
     }
-    return VM_ERROR;
+    return DYN_FALSE;
 }
 
-char ss_remove       (dyn_c* rslt, dyn_c params[2], ss_byte len)  {
+trilean ss_remove       (dyn_c* rslt, dyn_c params[2], dyn_byte len)  {
     if (len == 2)
     {
         dyn_move(&params[0], rslt);
         dyn_list_remove(rslt, dyn_get_int(&params[1]));
 
-        return VM_OK;
+        return DYN_TRUE;
     }
-    return VM_ERROR;
+    return DYN_FALSE;
 }
 
-char ss_pop       (dyn_c* rslt, dyn_c params[2], ss_byte len)  {
+trilean ss_pop       (dyn_c* rslt, dyn_c params[2], dyn_byte len)  {
     if (len)
     {
         dyn_copy(params, rslt);
         dyn_list_popi(rslt,1);
 
-        return VM_OK;
+        return DYN_TRUE;
     }
-    return VM_ERROR;
+    return DYN_FALSE;
 }
 
 #ifdef ARDUNINO
@@ -437,7 +437,7 @@ char ss_pop       (dyn_c* rslt, dyn_c params[2], ss_byte len)  {
     #include <time.h>
 #endif
 
-char ss_time_fct (dyn_c* rslt, dyn_c params[1], ss_byte len)  {
+trilean ss_time_fct (dyn_c* rslt, dyn_c params[1], dyn_byte len)  {
 
 #ifdef ARDUNINO
     dyn_set_float(rslt, (float) millis());
@@ -448,27 +448,27 @@ char ss_time_fct (dyn_c* rslt, dyn_c params[1], ss_byte len)  {
     return 1;
 }
 
-ss_uint hash(ss_char *val, ss_ushort init) {
-    ss_uint has = 5381;
+dyn_uint hash(char *val, dyn_ushort init) {
+    dyn_uint has = 5381;
     while(*val)
         has = 33 * has + *val++;
 
     return has+init;
 }
 
-char ss_hash (dyn_c* rslt, dyn_c params[2], ss_byte len)  {
+trilean ss_hash (dyn_c* rslt, dyn_c params[2], dyn_byte len)  {
 
     if (len) {
-        ss_str  val = dyn_get_string(params);
-        ss_uint has = hash(val, DYN_TYPE(params));
+        dyn_str  val = dyn_get_string(params);
+        dyn_uint has = hash(val, DYN_TYPE(params));
         free(val);
 
         if(len == 2) {
-            has = has % (ss_uint) dyn_get_int(&params[1]);
+            has = has % (dyn_uint) dyn_get_int(&params[1]);
         }
         dyn_set_int(rslt, has);
-        return VM_OK;
+        return DYN_TRUE;
     }
 
-    return VM_ERROR;
+    return DYN_FALSE;
 }

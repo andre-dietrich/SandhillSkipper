@@ -12,6 +12,7 @@
 #ifndef VM_C_H
 #define VM_C_H
 
+//#include "dynamic_types.h"
 #include "dynamic.h"
 #include "ss_string.h"
 
@@ -20,10 +21,10 @@
 #include "vm_error_codes.h"
 
 
-//typedef char (*ops) (dyn_c*, dyn_c[], ss_byte len);
+//typedef char (*ops) (dyn_c*, dyn_c[], dyn_byte len);
 //typedef char (*sys) (vm_env*, dyn_c*, dyn_c[], unsigned char)
 
-typedef trinary (*fct) (dyn_c*, dyn_c[], ss_byte);
+typedef trilean (*fct) (dyn_c*, dyn_c[], dyn_byte);
 
 /**
  * @brief Virtual Machine environment.
@@ -39,54 +40,54 @@ struct vm {
     dyn_c* loc;
 
     char* data;
-    //ss_ushort dp;
+    //dyn_ushort dp;
 
-    ss_ushort sp;
-    ss_char *pc;
+    dyn_ushort sp;
+    dyn_char *pc;
 
     dyn_c functions;
 
-    ss_char   status;
-    ss_ushort execution_steps;
-    ss_ushort memory_size;
-    ss_ushort stack_size;
+    dyn_char   status;
+    dyn_ushort execution_steps;
+    dyn_ushort memory_size;
+    dyn_ushort stack_size;
 } __attribute__ ((packed));
 typedef struct vm vm_env;
 
-typedef ss_char (*sys) (vm_env*, dyn_c*, dyn_c [], ss_byte);
+typedef dyn_char (*sys) (vm_env*, dyn_c*, dyn_c [], dyn_byte);
 
 
-vm_env* vm_init         (ss_ushort memory_size,
-                         ss_ushort stack_size,
-                         ss_ushort execution_steps);
+vm_env* vm_init         (dyn_ushort memory_size,
+                         dyn_ushort stack_size,
+                         dyn_ushort execution_steps);
 
 vm_env* vm_init2        (vm_env* env_main,
-                         ss_ushort stack_size,
-                         ss_ushort execution_steps);
+                         dyn_ushort stack_size,
+                         dyn_ushort execution_steps);
 
-ss_char vm_execute      (vm_env* env, ss_char* code, ss_char trace);
+dyn_char vm_execute      (vm_env* env, dyn_char* code, dyn_char trace);
 
 void    vm_free         (vm_env* env);
 
-void    vm_reset        (vm_env* env, ss_char hard);
+void    vm_reset        (vm_env* env, dyn_char hard);
 void    vm_result       (vm_env* env, dyn_c* rslt);
-ss_char vm_ready        (vm_env* env);
+dyn_char vm_ready        (vm_env* env);
 
-ss_int  vm_size         (vm_env* env);
+dyn_int  vm_size         (vm_env* env);
 
 dyn_c*  vm_get_rslt     (vm_env* env);
 
-ss_char vm_add_variable (vm_env* env, ss_str key, dyn_c* value);
-dyn_c*  vm_call_variable(vm_env* env, ss_str key);
+dyn_char vm_add_variable (vm_env* env, dyn_str key, dyn_c* value);
+dyn_c*  vm_call_variable(vm_env* env, dyn_str key);
 
-ss_char vm_add_function (vm_env* env, ss_str key, void *ptr, const ss_str info, ss_char sys);
-ss_char vm_call_function(vm_env* env, ss_str key,
+dyn_char vm_add_function (vm_env* env, dyn_str key, void *ptr, const dyn_str info, dyn_char sys);
+dyn_char vm_call_function(vm_env* env, dyn_str key,
                          dyn_c* rslt, dyn_c params [],
-                         ss_byte len);
+                         dyn_byte len);
 
-ss_char vm_get_iterator (dyn_c* iter_rslt, dyn_c* iter_dict, ss_int count);//(vm_env* env, ss_int count);
+dyn_char vm_get_iterator (dyn_c* iter_rslt, dyn_c* iter_dict, dyn_int count);//(vm_env* env, dyn_int count);
 
-void    vm_printf       (ss_str str, ss_char newline);
+void    vm_printf       (dyn_str str, dyn_char newline);
 
 /*
 static struct capabilities {
