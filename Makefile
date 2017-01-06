@@ -43,3 +43,10 @@ doc:
 
 test: lib
 		cd test; make
+
+ino:
+		cp vm*.h S2ino/
+		for f in vm*.c; do cp $$f S2ino/$${f}pp; done
+		cp dynamiC/dynamic*.h S2ino/
+		cd dynamiC; for f in dynamic*.c; do cp $$f ../S2ino/$${f}pp; done
+		echo "#define ARDUNINO" >> S2ino/dynamic_defines.h

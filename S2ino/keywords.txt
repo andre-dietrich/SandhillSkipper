@@ -1,0 +1,19 @@
+# Syntax Coloring Map For SimpleDHT
+###########################################
+
+# Datatypes (KEYWORD1)
+###########################################
+vm_env    KEYWORD1
+dyn_c     KEYWORD1
+dyn_list  KEYWORD1
+dyn_dict  KEYWORD1
+dyn_proc  KEYWORD1
+dyn_fct   KEYWORD1
+
+# Methods and Functions (KEYWORD2)
+###########################################
+vm_init KEYWORD2
+
+###########################################
+# Constants (LITERAL1)
+###########################################

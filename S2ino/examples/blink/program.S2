@@ -1,0 +1,13 @@
+count = 0;
+mode  = true;
+pin   = 13;
+
+LOOP (
+    IF( count > 500,
+        (
+            count = 0;
+            digitalWrite(pin, mode = not mode);
+        ),
+        count@+(1)
+    )
+);
