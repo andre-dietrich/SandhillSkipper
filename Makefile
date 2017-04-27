@@ -36,7 +36,7 @@ run: all
 
 clean:
 		$(RM) -f *.out *.o *.so
-		cd src; $(RM) -f *.out *.o *.so
+		cd dynamiC; make clean
 
 doc:
 		doxygen
