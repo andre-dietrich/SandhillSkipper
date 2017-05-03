@@ -251,6 +251,7 @@ case RET_P:
         dyn_list_pop(env_stack, &tmp2);
         pop = dyn_get_bool(&tmp2);
         dyn_list_pop(env_stack, &tmp2);
+        dyn_list_popi(env_stack, 1);
         if (DYN_NOT_NONE(&tmp2)) {
             dyn_move(&tmp, (dyn_c*)dyn_get_extern(&tmp2));
             dyn_set_ref(dyn_list_push_none(env_stack),
@@ -547,7 +548,15 @@ case CALL_FCT:
                              DYN_DICT_GET_I_REF(&tmp2, uc_i+us_i));
                 }
 
-                dyn_list_popi(env_stack, uc_len+1);
+                if (uc_len) {
+                  dyn_move(VM_STACK_END, VM_STACK_REF_END(uc_len-1));
+
+                  dyn_list_popi(env_stack, uc_len);
+
+                  dyc_ptr = VM_STACK_END;
+                  if (DYN_IS_REFERENCE(dyc_ptr))
+                      dyc_ptr = dyc_ptr->data.ref;
+                }
 
                 dyn_list_push_none(env_stack);
                 if (dyc_ptr2)
@@ -559,7 +568,9 @@ case CALL_FCT:
                 dyn_set_extern(dyn_list_push_none(env_stack), (void*)env->data);
                 dyn_set_extern(dyn_list_push_none(env_stack), (void*)pc);
 
+
                 pc = dyn_fct_get_ss(dyc_ptr);
+
 
                 dyn_move(&tmp2, dyn_list_push_none(env_stack));
 
