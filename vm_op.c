@@ -286,7 +286,7 @@ GOTO_FCT:
     return DYN_TRUE;
 }
 
-trilean vm_sys_print (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)
+trilean vm_sys_print (vm_env* env __attribute__ ((unused)), dyn_c* rslt, dyn_c params [], dyn_byte len)
 {
     // store last element
     if (len)
@@ -373,12 +373,12 @@ trilean vm_sys_del (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)
     return DYN_TRUE;
 }
 
-trilean fct_size   (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_int  (rslt, dyn_size(&params[0]));      return DYN_TRUE; }
-trilean fct_float  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_float(rslt, dyn_get_float(&params[0])); return DYN_TRUE; }
-trilean fct_int    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_int  (rslt, dyn_get_int(&params[0]));   return DYN_TRUE; }
-trilean fct_type   (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_int  (rslt, dyn_type(&params[0]));      return DYN_TRUE; }
-trilean fct_len    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_int  (rslt, dyn_length(&params[0]));    return DYN_TRUE; }
-trilean fct_str    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  {
+trilean fct_size   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_size(&params[0]));      return DYN_TRUE; }
+trilean fct_float  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_float(rslt, dyn_get_float(&params[0])); return DYN_TRUE; }
+trilean fct_int    (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_get_int(&params[0]));   return DYN_TRUE; }
+trilean fct_type   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_type(&params[0]));      return DYN_TRUE; }
+trilean fct_len    (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_length(&params[0]));    return DYN_TRUE; }
+trilean fct_str    (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  {
 
     dyn_str str = dyn_get_string(&params[0]);
     dyn_set_string(rslt, str);
@@ -388,15 +388,15 @@ trilean fct_str    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  {
 
 #define VM_TYPE(X)   (DYN_IS_REFERENCE(X) ? DYN_TYPE((X)->data.ref) : DYN_TYPE(X))
 
-trilean fct_is_none  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == NONE);      return DYN_TRUE; }
-trilean fct_is_bool  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == BOOL);      return DYN_TRUE; }
-trilean fct_is_int   (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == INTEGER);   return DYN_TRUE; }
-trilean fct_is_float (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == FLOAT);     return DYN_TRUE; }
-trilean fct_is_str   (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == STRING);    return DYN_TRUE; }
-trilean fct_is_list  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == LIST);      return DYN_TRUE; }
-trilean fct_is_dict  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == DICT);      return DYN_TRUE; }
-trilean fct_is_proc  (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == FUNCTION);  return DYN_TRUE; }
-trilean fct_is_ex    (dyn_c* rslt, dyn_c params[1], dyn_byte len)  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == EXTERN);    return DYN_TRUE; }
+trilean fct_is_none  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == NONE);      return DYN_TRUE; }
+trilean fct_is_bool  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == BOOL);      return DYN_TRUE; }
+trilean fct_is_int   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == INTEGER);   return DYN_TRUE; }
+trilean fct_is_float (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == FLOAT);     return DYN_TRUE; }
+trilean fct_is_str   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == STRING);    return DYN_TRUE; }
+trilean fct_is_list  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == LIST);      return DYN_TRUE; }
+trilean fct_is_dict  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == DICT);      return DYN_TRUE; }
+trilean fct_is_proc  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == FUNCTION);  return DYN_TRUE; }
+trilean fct_is_ex    (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_bool (rslt, VM_TYPE(&params[0]) == EXTERN);    return DYN_TRUE; }
 
 trilean fct_insert       (dyn_c* rslt, dyn_c params[3], dyn_byte len)  {
     if (len == 3)
@@ -437,7 +437,7 @@ trilean fct_pop       (dyn_c* rslt, dyn_c params[2], dyn_byte len)  {
     #include <time.h>
 #endif
 
-trilean fct_time (dyn_c* rslt, dyn_c params[1], dyn_byte len)  {
+trilean fct_time (dyn_c* rslt, dyn_c params[1] __attribute__ ((unused)), dyn_byte len __attribute__ ((unused)))  {
 
 #ifdef ARDUNINO
     dyn_set_float(rslt, (float) millis());
@@ -456,7 +456,7 @@ dyn_uint hash(char *val, dyn_ushort init) {
     return has+init;
 }
 
-trilean fct_hash (dyn_c* rslt, dyn_c params[2], dyn_byte len)  {
+trilean fct_hash (dyn_c* rslt, dyn_c params[2], dyn_byte len __attribute__ ((unused)))  {
 
     if (len) {
         dyn_str  val = dyn_get_string(params);

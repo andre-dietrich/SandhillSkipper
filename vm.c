@@ -173,8 +173,8 @@ dyn_char vm_execute (vm_env* env, dyn_char* code, dyn_char trace) {
     dyn_c*    dyc_ptr  = NULL;
     dyn_c*    dyc_ptr2 = NULL;
 
-    dyn_uint   i_i     = 0;
-    dyn_uint   i_j     = 0;
+    dyn_int   i_i      = 0;
+    dyn_int   i_j      = 0;
 
     dyn_byte   pop     = 0;
 
@@ -678,13 +678,13 @@ case LOCX:
         us_i = dyn_get_int(VM_STACK_REF(us_i));
     }
 
-    us_len = dyn_get_int(&tmp) + dyn_get_int(VM_STACK_REF(us_i+3)) -1;
+    i_i = dyn_get_int(&tmp) + dyn_get_int(VM_STACK_REF(us_i+3)) -1;
 
     dyn_list_push_none(env_stack);
-    if (us_len >= 0) {
+    if (i_i >= 0) {
         dyn_set_dict(&tmp, dyn_length(VM_STACK_REF(++us_i)));
 
-        if( vm_get_iterator (&tmp, VM_STACK_REF(us_i), us_len)) {
+        if( vm_get_iterator (&tmp, VM_STACK_REF(us_i), i_i)) {
             dyc_ptr = VM_LOCAL;
 
             dyc_ptr = DYN_DICT_GET_I_REF(&tmp, uc_i);
@@ -991,7 +991,7 @@ case IT_ORDER:
         dyn_copy( &tmp, DYN_LIST_GET_REF(dyc_ptr, i_j));
     }
 
-    if (i_i == ((dyn_uint)DYN_LIST_LEN(dyc_ptr))-1) {
+    if (i_i == ((dyn_int)DYN_LIST_LEN(dyc_ptr))-1) {
         i_j++;
         dyn_set_int(IT_COUNT1, i_j);
         dyn_set_int(IT_COUNT2, i_j);
