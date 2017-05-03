@@ -1,11 +1,11 @@
-CC	   = gcc
+CC	   = g++
 CXX    = g++
 RM	   = rm
 ECHO	 = echo
 
-DEFINES= -DS2_LIST -DS2_SET -DS2_DEBUG
+DEFINES= -DS2_DEBUG #-DS2_LIST -DS2_SET 
 
-CFLAGS = -Wall -g -I./ -I./dynamiC $(DEFINES) #-Os
+CFLAGS = -Wall -g -I./ -I./dynamiC #$(DEFINES) #-Os
 OBJLIB = libS2.so
 
 SRC  = $(wildcard vm*.c)

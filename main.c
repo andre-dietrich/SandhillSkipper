@@ -6,14 +6,14 @@
 
 #include "vm.h"
 #include "dynamic.h"
-#include "ss_string.h"
+//#include "ss_string.h"
 
 int main(int argc, char **argv) {
 
     vm_env *env = vm_init(25, 10, -1);
 
     char program [] = {
-        #include "test.c"
+//        #include "test.c"
     };
     vm_execute(env, program, 1);
     vm_printf("--------------------",1);

@@ -15,7 +15,7 @@
 #define VM_STACK_REF(I)     &stack->container[I]
 #define VM_STACK_REF_END(I) &stack->container[VM_STACK_LEN -I]
 
-#define VM_TRY              "\a"
+#define VM_TRY              (char *)"\a"
 
 #define VM_DATA(X)          get_data(env->data, X)
 
