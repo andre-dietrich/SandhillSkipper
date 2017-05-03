@@ -1,35 +1,35 @@
 db = {temp:[], humi:[], light:[]};
 
-i$ = 0;
-c$ = 0;
+$i = 0;
+$c = 0;
 
 LOOP (
 
-  IF( c$ == 500,
+  IF( $c == 500,
       (
-        c$ = 0;
-        t$ = analogRead(54);
-        h$ = analogRead(55);
-        l$ = analogRead(56);
+        $c = 0;
+        $t = analogRead(54);
+        $h = analogRead(55);
+        $l = analogRead(56);
 
-        draw("!dgr", h$, ",", t$, ",", l$);
+        draw("!dgr", $h, ",", $t, ",", $l);
 
-  IF( i$ >= 49,
+  IF( $i >= 49,
       (
-        db.temp [i$ - 50] = t$;
-        db.humi [i$ - 50] = h$;
-        db.light[i$ - 50] = l$;
+        db.temp [$i - 50] = $t;
+        db.humi [$i - 50] = $h;
+        db.light[$i - 50] = $l;
       ),
       (
-        db.temp@+(t$);
-        db.humi@+(h$);
-        db.light@+(l$);
+        db.temp@+($t);
+        db.humi@+($h);
+        db.light@+($l);
       ));
 
 
-  i$@+(1);
+  $i@+(1);
 
-  if(i$ >= 99, i$=50);
-  ), c$@+(1));
+  if($i >= 99, $i=50);
+  ), $c@+(1));
 
 );

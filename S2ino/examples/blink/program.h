@@ -13,20 +13,18 @@
 /*0046*/ LOAD,        0, // "count"
 /*0048*/ CST_S,       -12, 1, // 500
 /*0051*/ OP|GT,       1, // params: 2
-/*0053*/ FJUMP,       24, 0, // 24
+/*0053*/ FJUMP,       19, 0, // 19
 /*0056*/ SP_SAVE,     0, // local variables
 /*0058*/ CST_B,       0, 
 /*0060*/ STORE|P,     0, // "count"
 /*0062*/ LOAD,        2, // "pin"
 /*0064*/ LOAD,        1, // "mode"
-/*0066*/ OP|NOT,      0, // params: 1
-/*0068*/ STORE,       1, // "mode"
-/*0070*/ LOAD,        3, // "digitalWrite"
-/*0072*/ CALL_FCT,    2, // 2
-/*0074*/ RET|P,       
-/*0075*/ JUMP,        8, 0, // 8
-/*0078*/ LOAD,        0, // "count"
-/*0080*/ CST_B,       1, 
-/*0082*/ OPX|ADD|P,   1, // params: 2
-/*0084*/ JUMP,        -39, -1, // -39
-/*0087*/ RET,         
+/*0066*/ OPX|NOT,     0, // params: 1
+/*0068*/ LOAD,        3, // "digitalWrite"
+/*0070*/ CALL_FCT,    2, // 2
+/*0072*/ RET|P,       
+/*0073*/ LOAD,        0, // "count"
+/*0075*/ CST_B,       1, 
+/*0077*/ OPX|ADD|P,   1, // params: 2
+/*0079*/ JUMP,        -34, -1, // -34
+/*0082*/ RET,         

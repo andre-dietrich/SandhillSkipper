@@ -10,7 +10,7 @@ void setup() {
   Serial.begin(9600);
 
   env = vm_init(25, 10, 15);
-  vm_add_function(env, (ss_str)"analogRead", (void*)S2_analogRead, (ss_str) "", 0);
+  vm_add_function(env, (dyn_str)"analogRead", (void*)S2_analogRead, (dyn_str) "", 0);
 }
 
 void loop() {
@@ -18,7 +18,7 @@ void loop() {
   vm_execute(env, program, 0);
 }
 
-char S2_analogRead(dyn_c* rslt, dyn_c params[], ss_byte len)  {
+char S2_analogRead(dyn_c* rslt, dyn_c params[], dyn_byte len)  {
   dyn_free(rslt); // free rslt and set it to None
 
   switch (len) {

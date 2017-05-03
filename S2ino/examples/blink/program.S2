@@ -6,8 +6,9 @@ LOOP (
     IF( count > 500,
         (
             count = 0;
-            digitalWrite(pin, mode = not mode);
-        ),
-        count@+(1)
-    )
+            digitalWrite(pin, mode@not());
+        )
+    );
+
+    count@+(1);
 );

@@ -79,8 +79,8 @@ void setup() {
 
   env_main = vm_init(25, 10, 15);
 
-  vm_add_function(env_main, (ss_str)"analogRead", (void*)S2_analogRead, (ss_str) "", 0);
-  vm_add_function(env_main, (ss_str)"draw", (void*)S2_draw, (ss_str) "", 0);
+  vm_add_function(env_main, (dyn_str)"analogRead", (void*)S2_analogRead, (dyn_str) "", 0);
+  vm_add_function(env_main, (dyn_str)"draw", (void*)S2_draw, (dyn_str) "", 0);
 
   env_user = vm_init2(env_main, 100, 10);
 }
@@ -115,7 +115,7 @@ void loop() {
   vm_execute(env_main, program_main, 0);
 }
 
-char S2_analogRead(dyn_c* rslt, dyn_c params[], ss_byte len)  {
+char S2_analogRead(dyn_c* rslt, dyn_c params[], dyn_byte len)  {
   dyn_free(rslt); // free rslt and set it to None
 
   switch (len) {
@@ -132,7 +132,7 @@ char S2_analogRead(dyn_c* rslt, dyn_c params[], ss_byte len)  {
   return VM_OK;
 }
 
-char S2_draw(dyn_c* rslt, dyn_c params[], ss_byte len)  {
+char S2_draw(dyn_c* rslt, dyn_c params[], dyn_byte len)  {
 
   if (len) {
     for(int i=0; i<len; ++i) {

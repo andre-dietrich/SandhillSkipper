@@ -1,3 +1,3 @@
-value$ = analogRead(54); # store rslt in local variable
+$value = analogRead(54); # store rslt in local variable
 
-print("Measurement Result: ", value$);
+print("Measurement Result: ", $value);
