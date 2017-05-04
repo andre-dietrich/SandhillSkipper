@@ -83,10 +83,10 @@ vm_env* vm_init (dyn_ushort memory_size,
     DYN_INIT(&env->functions);
     dyn_set_dict(&env->functions, 24);
 
-    vm_add_function(env, (dyn_str)"print", (void*)vm_sys_print,    (dyn_str) "", 1); //"print: prints out the passed parameters, the last defines the return value ...");
-    vm_add_function(env, (dyn_str)"help",  (void*)vm_sys_help,     (dyn_str) "", 1); //"general help function ...");
-    vm_add_function(env, (dyn_str)"mem",   (void*)vm_sys_mem,      (dyn_str) "", 1); //"show mem ...");
-    vm_add_function(env, (dyn_str)"del",   (void*)vm_sys_del,      (dyn_str) "", 1); //"delete from memory ...");
+    vm_add_function(env, (dyn_str)"print", (void*)vm_sys_print, (dyn_str) "", 1); //"print: prints out the passed parameters, the last defines the return value ...");
+    vm_add_function(env, (dyn_str)"help",  (void*)vm_sys_help,  (dyn_str) "", 1); //"general help function ...");
+    vm_add_function(env, (dyn_str)"mem",   (void*)vm_sys_mem,   (dyn_str) "", 1); //"show mem ...");
+    vm_add_function(env, (dyn_str)"del",   (void*)vm_sys_del,   (dyn_str) "", 1); //"delete from memory ...");
     /*------------------------------------------------------------------------*/
     vm_add_function(env, (dyn_str)"size",  (void*)fct_size,     (dyn_str) "", 0); //"size");
     vm_add_function(env, (dyn_str)"float", (void*)fct_float,    (dyn_str) "", 0); //"to float");
@@ -106,10 +106,10 @@ vm_env* vm_init (dyn_ushort memory_size,
     vm_add_function(env, (dyn_str)"proc?", (void*)fct_is_proc,  (dyn_str) "", 0);
     vm_add_function(env, (dyn_str)"ex?",   (void*)fct_is_ex,    (dyn_str) "", 0);
 
-    vm_add_function(env, (dyn_str)"insert",(void*)fct_insert,       (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"remove",(void*)fct_remove,       (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"pop",   (void*)fct_pop,          (dyn_str) "", 0);
-    vm_add_function(env, (dyn_str)"hash",  (void*)fct_hash,         (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"insert",(void*)fct_insert,   (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"remove",(void*)fct_remove,   (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"pop",   (void*)fct_pop,      (dyn_str) "", 0);
+    vm_add_function(env, (dyn_str)"hash",  (void*)fct_hash,     (dyn_str) "", 0);
 
     env->loc  = NULL;
     env->data = NULL;
@@ -178,15 +178,17 @@ dyn_char vm_execute (vm_env* env, dyn_char* code, dyn_char trace) {
 
     dyn_byte   pop     = 0;
 
+    dyn_short execution_steps = env->execution_steps;
+
     if(env->status == VM_OK){
         env->sp = 0;
         env->status = VM_IDLE;
         env->pc = code;
-        dyn_list_push_none(env_stack);
+        dyn_list_push(env_stack, &tmp);   // reference to previous stack
+        dyn_list_push(env_stack, &tmp2);  // new local variables to stack
     }
-    char* pc = env->pc;
 
-    dyn_short execution_steps = env->execution_steps;
+    char* pc = env->pc;
 
 /*---------------------------------------------------------------------------*/
 //DISPACH:
@@ -225,7 +227,7 @@ do{
     if (POP & *pc)
         pop = 1;
 
-switch( uc_i = (dyn_byte)(POP_I & *pc++)){
+switch( uc_i = (dyn_byte)(POP_I & *pc++) ){
 /*---------------------------------------------------------------------------*/
 case RETX:
     dyn_list_popi(env_stack, VM_STACK_LEN - env->sp - 3);
@@ -244,14 +246,11 @@ case RET_P:
     env->sp = us_len;
 
     if (uc_i == RET_P) {
-        dyn_list_pop(env_stack, &tmp2);
-        pc = (dyn_char*)dyn_get_extern(&tmp2);
-        dyn_list_pop(env_stack, &tmp2);
-        env->data = (dyn_char*)dyn_get_extern(&tmp2);
-        dyn_list_pop(env_stack, &tmp2);
-        pop = dyn_get_bool(&tmp2);
-        dyn_list_pop(env_stack, &tmp2);
-        dyn_list_popi(env_stack, 1);
+        pc = (dyn_char*)dyn_get_extern(VM_STACK_REF_END(1));
+        env->data = (dyn_char*)dyn_get_extern(VM_STACK_REF_END(2));
+        pop = dyn_get_bool(VM_STACK_REF_END(3));
+        dyn_move(VM_STACK_REF_END(4), &tmp2);
+        dyn_list_popi(env_stack, 5);
         if (DYN_NOT_NONE(&tmp2)) {
             dyn_move(&tmp, (dyn_c*)dyn_get_extern(&tmp2));
             dyn_set_ref(dyn_list_push_none(env_stack),
@@ -280,16 +279,13 @@ case SP_SAVEX:
 /*---------------------------------------------------------------------------*/
 case SP_SAVE:
 /*---------------------------------------------------------------------------*/
-    dyn_list_push_none(env_stack);
+    dyn_list_push_none(env_stack);  // new repository for local variables
 
 LABEL_SP:
 
-    uc_len = (dyn_byte)*pc++;
+    uc_len = (dyn_byte)*pc++;       // length of local variable repository
     if (uc_len) {
-        if (DYN_IS_NONE(VM_STACK_END))
-            dyn_set_dict(VM_STACK_END, uc_len);
-        else
-            dyn_dict_resize(VM_STACK_END, uc_len);
+        dyn_set_dict(VM_STACK_END, uc_len);
     }
 
     dyn_set_int(&tmp, env->sp);
@@ -341,56 +337,33 @@ case CST_STR:
 
 /*---------------------------------------------------------------------------*/
 case CST_LST:
-/*---------------------------------------------------------------------------*/
-    us_len = *((dyn_ushort*) pc);
-    pc+=2;
-
-    dyn_set_list_len(&tmp, us_len);
-
-    us_i = us_len + 1;
-
-    while (--us_i) {
-        dyn_move( VM_STACK_REF_END(us_i),
-                  dyn_list_push_none(&tmp));
-    }
-
-    dyn_list_popi(env_stack, us_len);
-
-    goto GOTO__PUSH_TMP;
-
-/*---------------------------------------------------------------------------*/
 case CST_SET:
-/*---------------------------------------------------------------------------*/
-#ifdef S2_SET
-    us_len = *((dyn_ushort*) pc);
-    pc+=2;
-    dyn_set_set_len(&tmp, us_len);
-
-    us_i = us_len + 1;
-
-    while (--us_i) {
-        dyn_set_insert(&tmp, VM_STACK_REF_END(us_i));
-    }
-
-    dyn_list_popi(env_stack, us_len);
-    goto GOTO__PUSH_TMP;
-
-#endif
-/*---------------------------------------------------------------------------*/
 case CST_DCT:
 /*---------------------------------------------------------------------------*/
-    uc_len = *((dyn_byte*) pc++);
+    us_len = *((dyn_ushort*) pc);
+    pc+=2;
+    us_i = us_len + 1;
 
-    dyn_set_dict(&tmp, uc_len);
-
-    uc_i = uc_len + 1;
-
-    while (--uc_i) {
-        dyn_move( VM_STACK_REF_END(uc_i),
-                  dyn_dict_insert(&tmp, VM_DATA((dyn_byte)*pc++), &tmp2));
+    if (uc_i == CST_LST) {
+        dyn_set_list_len(&tmp, us_len);
+        while (--us_i) {
+            dyn_move( VM_STACK_REF_END(us_i), dyn_list_push_none(&tmp) );
+        }
+    } else if (uc_i == CST_DCT) {
+        dyn_set_dict(&tmp, us_len);
+        while (--us_i) {
+            dyn_move( VM_STACK_REF_END(us_i),
+                      dyn_dict_insert(&tmp, VM_DATA((dyn_byte)*pc++), &tmp2));
+        }
+    } else {
+        dyn_set_set_len(&tmp, us_len);
+        while (--us_i) {
+            dyn_set_insert(&tmp, VM_STACK_REF_END(us_i));
+        }
     }
 
-    dyn_list_popi(env_stack, uc_len);
+    dyn_list_popi(env_stack, us_len);
+
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
@@ -407,7 +380,7 @@ case LOAD:
     if (dyc_ptr)
         dyn_set_ref(dyn_list_push_none(env_stack), dyc_ptr);
     else
-        env->status = VM_ERROR;
+        env->status = VM_LOAD_VAR_FCT_ERROR;
 
     break;
 
@@ -432,7 +405,7 @@ case ELEM:
         case LIST:      // get value to change
                         dyc_ptr = dyn_list_get_ref(dyc_ptr, dyn_get_int( VM_STACK_END ));
                         if (dyc_ptr == NULL) {
-                            env->status = VM_ERROR;
+                            env->status = VM_ELEM_LOAD_ERROR;
                             goto L_SWITCH_END;
                         }
                         break; // optimize this
@@ -549,13 +522,13 @@ case CALL_FCT:
                 }
 
                 if (uc_len) {
-                  dyn_move(VM_STACK_END, VM_STACK_REF_END(uc_len-1));
+                    dyn_move(VM_STACK_END, VM_STACK_REF_END(uc_len-1));
 
-                  dyn_list_popi(env_stack, uc_len);
+                    dyn_list_popi(env_stack, uc_len);
 
-                  dyc_ptr = VM_STACK_END;
-                  if (DYN_IS_REFERENCE(dyc_ptr))
-                      dyc_ptr = dyc_ptr->data.ref;
+                    dyc_ptr = VM_STACK_END;
+                    if (DYN_IS_REFERENCE(dyc_ptr))
+                        dyc_ptr = dyc_ptr->data.ref;
                 }
 
                 dyn_list_push_none(env_stack);
@@ -604,6 +577,9 @@ case CALL_FCT:
 
         if (uc_i != VM_OK)
             env->status = VM_FUNCTION_ERROR;
+    }
+    else {
+      env->status = VM_NOT_A_FUNCTION;
     }
 
     break;

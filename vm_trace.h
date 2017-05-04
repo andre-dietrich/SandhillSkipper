@@ -1,3 +1,14 @@
+/**
+ * @file vm_trace.h
+ * @author André Dietrich
+ * @date 9 April 2016
+ *
+ * @brief Implementation of stack-trace functionality for debug purposes.
+ *
+ * todo.
+ * @see http://todo
+ */
+
 #ifndef VM_TRACE_C_H
 #define VM_TRACE_C_H
 

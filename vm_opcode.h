@@ -1,5 +1,5 @@
 /**
- * @file opcode.h
+ * @file vm_opcode.h
  * @author André Dietrich
  * @date 9 April 2016
  * @brief Definition of opcodes used by the Virtual Machine.

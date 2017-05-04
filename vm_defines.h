@@ -1,7 +1,8 @@
 /**
- * @file defines.h
+ * @file vm_defines.h
  * @author André Dietrich
  * @date 9 April 2016
+ *
  * @brief Definition of internal settings and applied data types.
  *
  * todo.

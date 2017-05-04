@@ -1,3 +1,14 @@
+/**
+ * @file vm_op.h
+ * @author André Dietrich
+ * @date 9 April 2016
+ *
+ * @brief Implementation of basic C-functions, which are applied by the VM
+ *
+ * todo.
+ * @see http://todo
+ */
+
 #ifndef VM_OP_C_H
 #define VM_OP_C_H
 
