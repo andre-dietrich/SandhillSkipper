@@ -463,20 +463,19 @@ case STORE_RF:
 /*---------------------------------------------------------------------------*/
 case STORE_LOC:
 /*---------------------------------------------------------------------------*/
-    cp_str = VM_DATA((dyn_byte)*pc++);
-
+    cp_str = VM_DATA((dyn_byte)*pc++);  // read string_id
+    // search for a local var with the given id, starting bottom up
     us_i = env->sp;
-
     dyc_ptr = find_local(stack, &us_i, cp_str);
-
+    // if not found, insert a new None value to the local variables
     if (!dyc_ptr) {
-        //if (DYN_IS_NONE(VM_LOCAL))
-        //    dyn_set_dict(VM_LOCAL, 1);
         dyc_ptr = dyn_dict_insert(VM_LOCAL, cp_str, &tmp);
     }
-
-    dyn_move(VM_STACK_END, DYN_IS_REFERENCE(dyc_ptr) ? dyc_ptr->data.ref : dyc_ptr);
-
+    // store last element on stack to local value
+    dyn_move(VM_STACK_END, DYN_IS_REFERENCE(dyc_ptr)
+                            ? dyc_ptr->data.ref
+                            : dyc_ptr);
+    // leave a reference to that value on the stack
     dyn_set_ref(VM_STACK_END, dyc_ptr);
     break;
 /*---------------------------------------------------------------------------*/
@@ -720,9 +719,10 @@ case IT_INITX:
 
     dyn_set_int(&tmp, 1 + dyn_get_int(VM_STACK_REF(4+dyn_get_int(VM_STACK_REF(env->sp)))));
 
-    dyn_list_push(env_stack, &tmp);
+    //dyn_list_push(env_stack, &tmp);
 
-    break;
+    //break;
+    goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
 case IT_STOREX:
@@ -773,8 +773,9 @@ case IT_CYCLE:
         us_i = dyn_get_int(VM_STACK_REF(us_i));
     }
 
-    dyn_list_push(env_stack, &tmp);
-    break;
+    goto GOTO__PUSH_TMP;
+    //dyn_list_push(env_stack, &tmp);
+    //break;
 
 /*---------------------------------------------------------------------------*/
 case IT_UNIQUE:
@@ -811,10 +812,10 @@ case CHK_FIRST:
     }
 
 
-    dyn_list_push(env_stack, &tmp);
-
+    //dyn_list_push(env_stack, &tmp);
+    goto GOTO__PUSH_TMP;
     //dyn_set_bool(dyn_list_push_none(env_stack), 0 == dyn_get_int(IT_COUNT2));
-    break;
+    //break;
 
 /*---------------------------------------------------------------------------*/
 case LOC_STEP:
