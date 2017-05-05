@@ -82,6 +82,8 @@ static const dyn_str opcodes[] = {
 
     (dyn_str)"IT_CYCLE",
     (dyn_str)"IT_UNIQUE",
+
+    (dyn_str)"YIELD",
 };
 
 static const dyn_str operators[] = {

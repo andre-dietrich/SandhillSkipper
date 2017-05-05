@@ -7,7 +7,7 @@ trilean op_unary( dyn_c *rslt, dyn_c op[], unary fct )
 {
     dyn_set_ref(rslt, op);
     return (*fct)(rslt);
-};
+}
 
 trilean op_binary(dyn_c *rslt, dyn_c op[], dyn_byte len, binary fct, dyn_byte shortcut)
 {
@@ -53,7 +53,7 @@ GOTO_NRM:   status = (*fct)(rslt, op);
             break;
     }
     return status;
-};
+}
 
 
 trilean op_IN (dyn_c *rslt, dyn_c op[], dyn_byte len)
@@ -80,7 +80,7 @@ GOTO_NRM:   status = dyn_op_in(rslt, op);
             break;
     }
     return status;
-};
+}
 
 
 /*
@@ -154,7 +154,7 @@ GOTO_NRM:       status = dyn_op_ne(rslt, op);
     }
 
     return status;
-};
+}
 
 
 trilean vm_op_dispatch (dyn_c *rslt, dyn_c op[], dyn_byte len, dyn_byte op_id)
@@ -203,7 +203,7 @@ trilean vm_op_dispatch (dyn_c *rslt, dyn_c op[], dyn_byte len, dyn_byte op_id)
 
     dyn_free(rslt);
     return DYN_FALSE;
-};
+}
 
 
 trilean vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)

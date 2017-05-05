@@ -12,17 +12,19 @@
 #ifndef OPCODE_H__
 #define OPCODE_H__
 
-#define SP_SAVEX     0
-#define SP_SAVE      1       /**< Store current stack-pointer on stack.         */
+#define SP_SAVEX     0      /**< byte: Initialize vm.data with the follwoing
+                                 char array and set initial stack-pointer     */
+#define SP_SAVE      1      /**< Store current stack-pointer on stack         */
 
-#define RET          2         // unsigned char
-#define RET_P        3
+#define RET          2      /**< Remove last stack-frame                      */
+#define RET_P        3      /**< Remove last stack-frame and restore pc/data/sp/...
+                                 which are stored also on the stack           */
 
-#define CST_N        4       /**< Push None value to stack.                     */
-#define CST_0        5       /**< Push Boolean False to stack.                  */
-#define CST_1        6       /**< Push Boolean True to stack.                   */
-#define CST_B        7       /**< Push Integer to stack, second element is a
-                                char, which is used for small numeric values. */
+#define CST_N        4      /**< Push None value to stack.                    */
+#define CST_0        5      /**< Push Boolean False to stack.                 */
+#define CST_1        6      /**< Push Boolean True to stack.                  */
+#define CST_B        7      /**< Push Integer to stack, second element is a
+                                 char, which is used for small numeric values.*/
 #define CST_S        8
 #define CST_I        9         // int,   push int to stack
 #define CST_F       10         // float, push float to stack
@@ -80,13 +82,15 @@
 #define IT_CYCLE    49
 #define IT_UNIQUE   50
 
-#define OP          0b01000000
-#define OPX         0b01100000
-#define OP_I        0b00011111
-#define OPERATION   0b10011111
+#define YIELD       51
 
-#define POP         0b10000000
-#define POP_I       0b01111111
+#define OP          (char) 0x40 //0b01000000
+#define OPX         (char) 0x60 //0b01100000
+#define OP_I        (char) 0x1f //0b00011111
+#define OPERATION   (char) 0x9f //0b10011111
+
+#define POP         (char) 0x80 //0b10000000
+#define POP_I       (char) 0x7f //0b01111111
 #define P           POP
 
 

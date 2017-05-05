@@ -5,7 +5,7 @@ ECHO	 = echo
 
 DEFINES= -DS2_DEBUG #-DS2_LIST -DS2_SET
 
-CFLAGS = -Wall -g -I./ -I./dynamiC #$(DEFINES) #-Os
+CFLAGS = -Wall -g -I./ -I./dynamiC $(DEFINES) #-Os
 OBJLIB = libS2.so
 
 SRC  = $(wildcard vm*.c)

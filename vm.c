@@ -15,7 +15,7 @@
 #define VM_STACK_REF(I)     &stack->container[I]
 #define VM_STACK_REF_END(I) &stack->container[VM_STACK_LEN -I]
 
-#define VM_TRY              (char *)"\a"
+#define VM_TRY              "\a"
 
 #define VM_DATA(X)          get_data(env->data, X)
 
@@ -185,11 +185,10 @@ dyn_char vm_execute (vm_env* env, dyn_char* code, dyn_char trace) {
         env->status = VM_IDLE;
         env->pc = code;
         dyn_list_push(env_stack, &tmp);   // reference to previous stack
-        dyn_list_push(env_stack, &tmp2);  // new local variables to stack
+        //dyn_list_push(env_stack, &tmp2);  // new local variables to stack
     }
 
     char* pc = env->pc;
-
 /*---------------------------------------------------------------------------*/
 //DISPACH:
 /*---------------------------------------------------------------------------*/
@@ -529,7 +528,7 @@ case CALL_FCT:
                     if (DYN_IS_REFERENCE(dyc_ptr))
                         dyc_ptr = dyc_ptr->data.ref;
                 }
-
+                // reference to external fct_call
                 dyn_list_push_none(env_stack);
                 if (dyc_ptr2)
                     dyn_set_extern(VM_STACK_END, dyc_ptr2);
@@ -1074,7 +1073,17 @@ case REF:
     else
         env->status = VM_ERROR;
     break;
+/*---------------------------------------------------------------------------*/
+case YIELD:
+/*---------------------------------------------------------------------------*/
+    if (pop)
+        dyn_list_pop(env_stack, &env->rslt);
+    else
+        dyn_copy(VM_STACK_END, &env->rslt);
 
+    env->pc = pc;
+
+    return VM_YIELD;
 /*---------------------------------------------------------------------------*/
 default:
 /*---------------------------------------------------------------------------*/
@@ -1101,8 +1110,8 @@ default:
     else
         dyn_move(&tmp, VM_STACK_END);
 
-    if (uc_i != VM_OK)
-        env->status = VM_OPERATION_NOT_PERMITTED;
+    //if (uc_i != VM_OK)
+    //    env->status = VM_OPERATION_NOT_PERMITTED;
 }
 
 L_SWITCH_END:
@@ -1124,7 +1133,7 @@ GOTO__FINISH:
     dyn_free(&tmp2);
     vm_reset(env, 0);
 
-    return 1;
+    return VM_OK;
 }
 
 dyn_ushort dict_heigth (dyn_c* dyn)
