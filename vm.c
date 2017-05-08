@@ -573,7 +573,7 @@ case CALL_FCT:
         else
             dyn_move(&tmp, VM_STACK_END);
 
-        if (uc_i != VM_OK)
+        if (uc_i != DYN_TRUE)
             env->status = VM_FUNCTION_ERROR;
     }
     else {
