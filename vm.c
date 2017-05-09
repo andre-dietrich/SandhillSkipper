@@ -199,7 +199,7 @@ do{
 
     //fprintf(stderr, "FFFFFFFFFFFFFFFF \n");
 
-    if (env->status != VM_IDLE) {
+    if (env->status >= VM_ERROR) {
         us_i = env->sp;
         dyc_ptr = find_local(stack, &us_i, VM_TRY);
         if (dyc_ptr) {
@@ -1110,8 +1110,8 @@ default:
     else
         dyn_move(&tmp, VM_STACK_END);
 
-    //if (uc_i != VM_OK)
-    //    env->status = VM_OPERATION_NOT_PERMITTED;
+    if (uc_i != DYN_TRUE)
+        env->status = VM_OPERATION_NOT_PERMITTED;
 }
 
 L_SWITCH_END:
