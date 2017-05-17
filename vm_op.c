@@ -181,6 +181,7 @@ trilean vm_op_dispatch (dyn_c *rslt, dyn_c op[], dyn_byte len, dyn_byte op_id)
         case GT:    return op_binary2(rslt, op, len, &dyn_op_gt);
         case GE:    return op_binary2(rslt, op, len, &dyn_op_ge);
         case EQ:    return op_binary2(rslt, op, len, &dyn_op_eq);
+        case ID:    return op_binary2(rslt, op, len, &dyn_op_id);
 
         case NE:    return op_NE(rslt, op, len);
         case IN:    return op_IN(rslt, op, len);

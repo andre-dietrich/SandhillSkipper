@@ -102,6 +102,7 @@ static const dyn_str operators[] = {
   (dyn_str)">=",
   (dyn_str)"!=",
   (dyn_str)"==",
+  (dyn_str)"===",
   (dyn_str)"and",
   (dyn_str)"xor",
   (dyn_str)"or",

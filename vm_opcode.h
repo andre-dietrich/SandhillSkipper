@@ -111,21 +111,22 @@
 #define GT    11
 #define NE    12
 #define EQ    13
+#define ID    14
 
-#define AND   14
-#define XOR   15
-#define OR    16
+#define AND   15
+#define XOR   16
+#define OR    17
 
-#define IN    17
+#define IN    18
 
-#define B_NOT 18
-#define B_AND 19
-#define B_OR  20
-#define B_XOR 21
-#define LEFT  22
-#define RIGHT 23
+#define B_NOT 19
+#define B_AND 20
+#define B_OR  21
+#define B_XOR 22
+#define LEFT  23
+#define RIGHT 24
 
-#define EX    24
+#define EX    25
 
 
 #endif //OPCODE__H
