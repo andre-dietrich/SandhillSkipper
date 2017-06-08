@@ -126,7 +126,7 @@ GOTO_NRM:       status = dyn_op_ne(rslt, op);
 trilean op_NE(dyn_c *rslt, dyn_c op[], dyn_byte len)
 {
     trilean status = DYN_TRUE;
-    dyn_short i;
+    dyn_short i    = 0;
 
     dyn_c *first = op;
 

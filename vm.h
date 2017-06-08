@@ -52,8 +52,9 @@ typedef struct vm vm_env;
 
 //! Function-type definition for applied operators
 typedef trilean (*fct) (dyn_c*, dyn_c[], dyn_byte);
+
 //! Function-type definition for external C-Functions
-typedef dyn_char (*sys) (vm_env*, dyn_c*, dyn_c [], dyn_byte);
+typedef trilean (*sys) (vm_env*, dyn_c*, dyn_c [], dyn_byte);
 
 //! Basic initialization function of the VM
 vm_env*  vm_init        (dyn_ushort memory_size,
@@ -79,22 +80,22 @@ dyn_int  vm_size        (vm_env* env);
 dyn_c*  vm_get_rslt     (vm_env* env);
 
 //! Add a global variable from C
-dyn_char vm_add_variable(vm_env* env, dyn_str key, dyn_c* value);
+trilean vm_add_variable(vm_env* env, dyn_const_str key, dyn_c* value);
 //! Get the value of a global variable
-dyn_c*  vm_call_variable(vm_env* env, dyn_str key);
+dyn_c*  vm_call_variable(vm_env* env, dyn_const_str key);
 
 //! Add a C-function to the VM environment
-dyn_char vm_add_function (vm_env* env, dyn_str key, void *ptr, const dyn_str info, dyn_char sys);
+trilean vm_add_function (vm_env* env, dyn_const_str key, void *ptr, dyn_const_str info, dyn_char sys);
 //! Depricated
-dyn_char vm_call_function(vm_env* env, dyn_str key,
+trilean vm_call_function(vm_env* env, dyn_const_str key,
                          dyn_c* rslt, dyn_c params [],
                          dyn_byte len);
 
 //! Used by SELECT - statements to iterate over the Cartesian product of a given input
-dyn_char vm_get_iterator (dyn_c* iter_rslt, dyn_c* iter_dict, dyn_int count);
+trilean vm_get_iterator (dyn_c* iter_rslt, dyn_c* iter_dict, dyn_int count);
 
 //! System-function for printing out to the console
-void    vm_printf        (dyn_str str, dyn_char newline);
+void    vm_printf        (dyn_const_str str, dyn_char newline);
 
 /*
 static struct capabilities {

@@ -1,6 +1,109 @@
 #include "vm.h"
 #include "vm_trace.h"
 
+static dyn_const_str opcodes[] = {
+    "SP_SAVEX",
+    "SP_SAVE",
+
+    "RET",
+    "RET_P",
+
+    "CST_N",
+    "CST_0",
+    "CST_1",
+    "CST_B",
+    "CST_S",
+    "CST_I",
+    "CST_F",
+
+    "CST_STR",
+    "CST_LST",
+    "CST_SET",
+    "CST_DCT",
+
+    "LOC",
+    "LOCX",
+    "LOAD",
+    "ELEM",
+
+    "STORE",
+    "STORE_RF",
+    "STORE_LOC",
+
+    "CALL_FCTX",
+    "CALL_FCT",
+
+    "FJUMP",
+    "JUMP",
+
+    "PROC",
+
+    "IT_INIT",
+    "IT_NEXT0",
+    "IT_NEXT1",
+    "IT_NEXT2",
+    "IT_NEXT3",
+    "IT_STORE",
+    "IT_LIMIT",
+
+    "IT_GROUP",
+    "IT_ORDER",
+    "IT_AS",
+
+    "EXIT",
+    "REC_SET",
+
+    "TRY_1",
+    "TRY_0",
+
+    "REF",
+
+    "IT_INITX",
+    "IT_STOREX",
+    "CHK_FIRST",
+    "RET_X",
+    "IT_STOREX2",
+
+    "LOC_STEP",
+    "LOC_COUNT",
+
+    "IT_CYCLE",
+    "IT_UNIQUE",
+
+    "YIELD",
+};
+
+static dyn_const_str operators[] = {
+  "!",
+  "--",
+  "+",
+  "-",
+  "*",
+  "/",
+  "%",
+  "**",
+
+  "<",
+  "<=",
+  ">",
+  ">=",
+  "!=",
+  "==",
+  "===",
+  "and",
+  "xor",
+  "or",
+  "in",
+
+  "~",
+  "&",
+  "|",
+  "^",
+  "<<",
+  ">>",
+
+  "EX" };
+
 #ifdef S2_DEBUG
 void vm_trace (vm_env* env, dyn_char* code)
 {
