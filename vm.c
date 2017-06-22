@@ -83,33 +83,33 @@ vm_env* vm_init (dyn_ushort memory_size,
     DYN_INIT(&env->functions);
     dyn_set_dict(&env->functions, 24);
 
-    vm_add_function(env, "print", (void*)vm_sys_print, "", 1); //"print: prints out the passed parameters, the last defines the return value ...");
-    vm_add_function(env, "help",  (void*)vm_sys_help,  "", 1); //"general help function ...");
-    vm_add_function(env, "mem",   (void*)vm_sys_mem,   "", 1); //"show mem ...");
-    vm_add_function(env, "del",   (void*)vm_sys_del,   "", 1); //"delete from memory ...");
+    vm_add_function(env, DYN_FCT_SYS, "help",  (void*)vm_sys_help,  NULL); //"general help function ...");
+    vm_add_function(env, DYN_FCT_SYS, "mem",   (void*)vm_sys_mem,   NULL); //"show mem ...");
+    vm_add_function(env, DYN_FCT_SYS, "del",   (void*)vm_sys_del,   NULL); //"delete from memory ...");
     /*------------------------------------------------------------------------*/
-    vm_add_function(env, "size",  (void*)fct_size,     "", 0); //"size");
-    vm_add_function(env, "float", (void*)fct_float,    "", 0); //"to float");
-    vm_add_function(env, "str",   (void*)fct_str,      "", 0); //"to string");
-    vm_add_function(env, "int",   (void*)fct_int,      "", 0); //"to int");
-    vm_add_function(env, "type",  (void*)fct_type,     "", 0); //"type");
-    vm_add_function(env, "len",   (void*)fct_len,      "", 0); //"length");
-    vm_add_function(env, "time",  (void*)fct_time,     "", 0); //"time");
+    vm_add_function(env, DYN_FCT_C,   "print", (void*)fct_print,    NULL); //"print: prints out the passed parameters, the last defines the return value ...");
+    vm_add_function(env, DYN_FCT_C,   "size",  (void*)fct_size,     NULL); //"size");
+    vm_add_function(env, DYN_FCT_C,   "float", (void*)fct_float,    NULL); //"to float");
+    vm_add_function(env, DYN_FCT_C,   "str",   (void*)fct_str,      NULL); //"to string");
+    vm_add_function(env, DYN_FCT_C,   "int",   (void*)fct_int,      NULL); //"to int");
+    vm_add_function(env, DYN_FCT_C,   "type",  (void*)fct_type,     NULL); //"type");
+    vm_add_function(env, DYN_FCT_C,   "len",   (void*)fct_len,      NULL); //"length");
+    vm_add_function(env, DYN_FCT_C,   "time",  (void*)fct_time,     NULL); //"time");
 
-    vm_add_function(env, "none?", (void*)fct_is_none,  "", 0);
-    vm_add_function(env, "bool?", (void*)fct_is_bool,  "", 0);
-    vm_add_function(env, "int?",  (void*)fct_is_int,   "", 0);
-    vm_add_function(env, "float?",(void*)fct_is_float, "", 0);
-    vm_add_function(env, "str?",  (void*)fct_is_str,   "", 0);
-    vm_add_function(env, "list?", (void*)fct_is_list,  "", 0);
-    vm_add_function(env, "dict?", (void*)fct_is_dict,  "", 0);
-    vm_add_function(env, "proc?", (void*)fct_is_proc,  "", 0);
-    vm_add_function(env, "ex?",   (void*)fct_is_ex,    "", 0);
+    vm_add_function(env, DYN_FCT_C,   "none?", (void*)fct_is_none,  NULL);
+    vm_add_function(env, DYN_FCT_C,   "bool?", (void*)fct_is_bool,  NULL);
+    vm_add_function(env, DYN_FCT_C,   "int?",  (void*)fct_is_int,   NULL);
+    vm_add_function(env, DYN_FCT_C,   "float?",(void*)fct_is_float, NULL);
+    vm_add_function(env, DYN_FCT_C,   "str?",  (void*)fct_is_str,   NULL);
+    vm_add_function(env, DYN_FCT_C,   "list?", (void*)fct_is_list,  NULL);
+    vm_add_function(env, DYN_FCT_C,   "dict?", (void*)fct_is_dict,  NULL);
+    vm_add_function(env, DYN_FCT_C,   "proc?", (void*)fct_is_proc,  NULL);
+    vm_add_function(env, DYN_FCT_C,   "ex?",   (void*)fct_is_ex,    NULL);
 
-    vm_add_function(env, "insert",(void*)fct_insert,   "", 0);
-    vm_add_function(env, "remove",(void*)fct_remove,   "", 0);
-    vm_add_function(env, "pop",   (void*)fct_pop,      "", 0);
-    vm_add_function(env, "hash",  (void*)fct_hash,     "", 0);
+    vm_add_function(env, DYN_FCT_C,   "insert",(void*)fct_insert,   NULL);
+    vm_add_function(env, DYN_FCT_C,   "remove",(void*)fct_remove,   NULL);
+    vm_add_function(env, DYN_FCT_C,   "pop",   (void*)fct_pop,      NULL);
+    vm_add_function(env, DYN_FCT_C,   "hash",  (void*)fct_hash,     NULL);
 
     env->loc  = NULL;
     env->data = NULL;
@@ -497,8 +497,23 @@ case CALL_FCT:
 
     if (DYN_TYPE(dyc_ptr) == FUNCTION) {
         switch (dyc_ptr->data.fct->type) {
-            // PROCEDURE
+
+            // Normal C-function
             case 0: {
+                fct f = (fct) dyc_ptr->data.fct->ptr;
+                uc_i  = (*f)(&tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
+                break;
+            }
+            // System C-function
+            case 1: {
+                sys f = (sys) dyc_ptr->data.fct->ptr;
+                env->pc=pc;
+                uc_i  = (*f)(env, &tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
+                pc=env->pc;
+                break;
+            }
+
+            default : {
 
                 dyn_proc *proc = (dyn_proc*) dyc_ptr->data.fct->ptr;
 
@@ -550,19 +565,6 @@ case CALL_FCT:
 
                 goto L_SWITCH_END;
 
-            }
-            // Normal C-function
-            case 1: {
-                fct f = (fct) dyc_ptr->data.fct->ptr;
-                uc_i  = (*f)(&tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
-                break;
-            }
-            // System C-function
-            case 2: {
-                sys f = (sys) dyc_ptr->data.fct->ptr;
-                env->pc=pc;
-                uc_i  = (*f)(env, &tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
-                pc=env->pc;
             }
         }
 
@@ -1268,7 +1270,7 @@ dyn_c* vm_call_variable (vm_env* env, dyn_const_str key)
     return dyn_dict_get(&env->memory, key);
 }
 
-trilean vm_add_function (vm_env* env, dyn_const_str key, void *ptr, dyn_const_str info, dyn_char sys)
+trilean vm_add_function (vm_env* env, dyn_char type, dyn_const_str key, void *ptr, dyn_const_str info)
 {
     dyn_c none;
     DYN_INIT(&none);
@@ -1276,13 +1278,14 @@ trilean vm_add_function (vm_env* env, dyn_const_str key, void *ptr, dyn_const_st
     if (dyn_dict_insert(&env->functions, key, &none)) {
         if (dyn_set_fct(DYN_DICT_GET_I_REF(&env->functions,
                                             DYN_DICT_LEN((&env->functions))-1),
-                        ptr, sys+1, info))
+                        ptr, type, info))
             return DYN_TRUE;
     }
 
     return DYN_FALSE;
 }
 
+/*
 trilean vm_call_function (vm_env* env, dyn_const_str key, dyn_c* rslt, dyn_c params[], dyn_byte len)
 {
     dyn_ushort pos = dyn_dict_has_key(&env->functions, key);
@@ -1308,6 +1311,7 @@ trilean vm_call_function (vm_env* env, dyn_const_str key, dyn_c* rslt, dyn_c par
 
     return DYN_FALSE;
 }
+*/
 
 void  vm_printf (dyn_const_str str, dyn_char newline)
 {

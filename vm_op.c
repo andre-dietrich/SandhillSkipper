@@ -233,7 +233,7 @@ trilean vm_sys_help (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)
         dyn_c *fct;
         dyn_str fct_name = NULL;
 
-        if (DYN_TYPE(params->data.ref) == STRING) {
+        if (DYN_TYPE(params) == STRING || DYN_TYPE(params->data.ref) == STRING) {
             fct_name = dyn_get_string(&params[0]);
 
             for (len=0; len<2; ++len) {
@@ -244,11 +244,14 @@ GOTO_FCT:
                     i = 1;
                     if (DYN_TYPE(fct) == FUNCTION) {
                         switch (fct->data.fct->type) {
-                            case 0: dyn_set_string(rslt, "procedure");
-                                    break;
-                            case 1: dyn_set_string(rslt, "function");
-                                    break;
-                            case 2: dyn_set_string(rslt, "sytem-function");
+                            case DYN_FCT_C:
+                                dyn_set_string(rslt, "function");
+                                break;
+                            case DYN_FCT_SYS:
+                                dyn_set_string(rslt, "sytem-function");
+                                break;
+                            default:
+                                dyn_set_string(rslt, "procedure");
                         }
                         if (fct->data.fct->info != NULL) {
                             dyn_strcat2(rslt->data.str, (dyn_str)"\n");
@@ -284,30 +287,6 @@ GOTO_FCT:
         }
     }
 */
-    return DYN_TRUE;
-}
-
-trilean vm_sys_print (vm_env* env __attribute__ ((unused)), dyn_c* rslt, dyn_c params [], dyn_byte len)
-{
-    // store last element
-    if (len)
-        dyn_copy(&params[len-1], rslt);
-    else {
-        dyn_free(rslt);
-        goto LABEL_OK;
-    }
-    {
-        dyn_str str = NULL;
-        dyn_byte i;
-        for (i=0; i<len; ++i) {
-            str = dyn_get_string(&params[i]);
-            vm_printf(str, 0);
-            free(str);
-            vm_printf((dyn_str)" ", 0);
-        }
-    }
-LABEL_OK:
-    vm_printf((dyn_str)"", 1);
     return DYN_TRUE;
 }
 
@@ -374,13 +353,37 @@ trilean vm_sys_del (vm_env* env, dyn_c* rslt, dyn_c params [], dyn_byte len)
     return DYN_TRUE;
 }
 
-trilean fct_size   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_size(&params[0]));      return DYN_TRUE; }
-trilean fct_float  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_float(rslt, dyn_get_float(&params[0])); return DYN_TRUE; }
-trilean fct_int    (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_get_int(&params[0]));   return DYN_TRUE; }
-trilean fct_type   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_type(&params[0]));      return DYN_TRUE; }
-trilean fct_len    (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_length(&params[0]));    return DYN_TRUE; }
-trilean fct_str    (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  {
+trilean fct_print (dyn_c* rslt, dyn_c params [], dyn_byte len)
+{
+    // store last element
+    if (len)
+        dyn_copy(&params[len-1], rslt);
+    else {
+        dyn_free(rslt);
+        goto LABEL_OK;
+    }
+    {
+        dyn_str str = NULL;
+        dyn_byte i;
+        for (i=0; i<len; ++i) {
+            str = dyn_get_string(&params[i]);
+            vm_printf(str, 0);
+            free(str);
+            vm_printf((dyn_str)" ", 0);
+        }
+    }
+LABEL_OK:
+    vm_printf((dyn_str)"", 1);
+    return DYN_TRUE;
+}
 
+trilean fct_size  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_size(&params[0]));      return DYN_TRUE; }
+trilean fct_float (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_float(rslt, dyn_get_float(&params[0])); return DYN_TRUE; }
+trilean fct_int   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_get_int(&params[0]));   return DYN_TRUE; }
+trilean fct_type  (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_type(&params[0]));      return DYN_TRUE; }
+trilean fct_len   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))  { dyn_set_int  (rslt, dyn_length(&params[0]));    return DYN_TRUE; }
+trilean fct_str   (dyn_c* rslt, dyn_c params[1], dyn_byte len __attribute__ ((unused)))
+{
     dyn_str str = dyn_get_string(&params[0]);
     dyn_set_string(rslt, str);
     free(str);

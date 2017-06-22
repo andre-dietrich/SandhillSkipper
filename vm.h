@@ -85,11 +85,11 @@ trilean vm_add_variable(vm_env* env, dyn_const_str key, dyn_c* value);
 dyn_c*  vm_call_variable(vm_env* env, dyn_const_str key);
 
 //! Add a C-function to the VM environment
-trilean vm_add_function (vm_env* env, dyn_const_str key, void *ptr, dyn_const_str info, dyn_char sys);
+trilean vm_add_function (vm_env* env, dyn_char type, dyn_const_str key, void *ptr, dyn_const_str info);
 //! Depricated
-trilean vm_call_function(vm_env* env, dyn_const_str key,
-                         dyn_c* rslt, dyn_c params [],
-                         dyn_byte len);
+//trilean vm_call_function(vm_env* env, dyn_const_str key,
+//                         dyn_c* rslt, dyn_c params [],
+//                         dyn_byte len);
 
 //! Used by SELECT - statements to iterate over the Cartesian product of a given input
 trilean vm_get_iterator (dyn_c* iter_rslt, dyn_c* iter_dict, dyn_int count);
