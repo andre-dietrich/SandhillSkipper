@@ -25,6 +25,14 @@
 #define IT_COUNT1           VM_STACK_REF(env->sp+3)
 #define IT_COUNT2           VM_STACK_REF(env->sp+4)
 
+/*
+struct insert_fuction {
+    dyn_char        type;
+    dyn_const_str   name;
+    void*           fct;
+    dyn_const_str   info;
+};
+*/
 
 dyn_c* find_local(dyn_list* stack, dyn_ushort* start, dyn_const_str id)
 {
