@@ -79,11 +79,12 @@ vm_env* vm_init (dyn_ushort memory_size,
 
     env->pc = NULL;
 
-    DYN_INIT(&env->stack);
-    (void)DYN_SET_LIST(&env->stack);
-
+    DYN_INIT(&env->params);
     DYN_INIT(&env->rslt);
-    dyn_set_none(&env->rslt);
+    //dyn_set_none(&env->rslt);
+
+    DYN_INIT(&env->stack);
+    //(void)DYN_SET_LIST(&env->stack);
 
     DYN_INIT(&env->memory);
     (void)dyn_set_dict(&env->memory, 1);
@@ -141,10 +142,11 @@ vm_env* vm_init2(vm_env*   main_env,
     env->pc = NULL;
 
     DYN_INIT(&env->stack);
-    (void)DYN_SET_LIST(&env->stack);
+    //(void)DYN_SET_LIST(&env->stack);
 
+    DYN_INIT(&env->params);
     DYN_INIT(&env->rslt);
-    dyn_set_none(&env->rslt);
+    //dyn_set_none(&env->rslt);
 
     env->memory    = main_env->memory;
     env->functions = main_env->functions;
@@ -171,9 +173,6 @@ dyn_char vm_execute (vm_env* env, dyn_char* code, dyn_char trace) {
     DYN_INIT(&tmp);
     DYN_INIT(&tmp2);
 
-    dyn_list*  stack = env->stack.data.list;
-    dyn_c* env_stack = &env->stack;
-
     dyn_ushort us_len  = 0;
     dyn_ushort us_i    = 0;
     dyn_byte   uc_len  = 0;
@@ -190,15 +189,27 @@ dyn_char vm_execute (vm_env* env, dyn_char* code, dyn_char trace) {
 
     dyn_short execution_steps = env->execution_steps;
 
+    dyn_list*  stack = NULL;
+    dyn_c* env_stack = NULL;
+
+    char* pc = NULL;
+
     if(env->status == VM_OK){
-        env->sp = 0;
-        env->status = VM_IDLE;
         env->pc = code;
-        dyn_list_push(env_stack, &tmp);   // reference to previous stack
-        //dyn_list_push(env_stack, &tmp2);  // new local variables to stack
+        env->status = VM_IDLE;
+
+        dyn_set_list_len(&env->stack, 2);
+
+GOTO__INIT_STACK:
+        env->sp = 0;
+        DYN_SET_LIST(dyn_list_push_none(&env->stack));
+        dyn_list_push_none(DYN_LIST_GET_END(&env->stack));
     }
 
-    char* pc = env->pc;
+    env_stack = DYN_LIST_GET_END(&env->stack);
+    stack = env_stack->data.list;
+
+    pc = env->pc;
 /*---------------------------------------------------------------------------*/
 //DISPACH:
 /*---------------------------------------------------------------------------*/
@@ -256,11 +267,16 @@ case RET_P:
     env->sp = us_len;
 
     if (uc_i == RET_P) {
+        dyn_list_popi(&env->stack, 1);
+        env_stack = DYN_LIST_GET_END(&env->stack);
+        stack = env_stack->data.list;
+
         pc = (dyn_char*)dyn_get_extern(VM_STACK_REF_END(1));
         env->data = (dyn_char*)dyn_get_extern(VM_STACK_REF_END(2));
-        pop = dyn_get_bool(VM_STACK_REF_END(3));
-        dyn_move(VM_STACK_REF_END(4), &tmp2);
-        dyn_list_popi(env_stack, 5);
+        env->sp = dyn_get_int(VM_STACK_REF_END(3));
+        pop = dyn_get_bool(VM_STACK_REF_END(4));
+        dyn_move(VM_STACK_REF_END(5), &tmp2);
+        dyn_list_popi(env_stack, 6);
         if (DYN_NOT_NONE(&tmp2)) {
             dyn_move(&tmp, (dyn_c*)dyn_get_extern(&tmp2));
             dyn_set_ref(dyn_list_push_none(env_stack),
@@ -507,13 +523,13 @@ case CALL_FCT:
         switch (dyc_ptr->data.fct->type) {
 
             // Normal C-function
-            case 0: {
+            case DYN_FCT_C: {
                 fct f = (fct) dyc_ptr->data.fct->ptr;
                 uc_i  = (*f)(&tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
                 break;
             }
             // System C-function
-            case 1: {
+            case DYN_FCT_SYS: {
                 sys f = (sys) dyc_ptr->data.fct->ptr;
                 env->pc=pc;
                 uc_i  = (*f)(env, &tmp, dyn_list_get_ref(env_stack, -uc_len-1), uc_len);
@@ -522,38 +538,24 @@ case CALL_FCT:
             }
 
             default : {
-
-                dyn_proc *proc = (dyn_proc*) dyc_ptr->data.fct->ptr;
-
-                dyn_copy(&proc->params, &tmp2);
-
-                us_len = VM_STACK_LEN - uc_len - 1;
-
-                us_i = 0;
-                if (DYN_NOT_NONE(&proc->params)) {
-                    // todo optimize
-                    if (DYN_DICT_GET_I_KEY(&tmp2, 0)[0] == 0) {
-                        if (DYN_DICT_LEN((&proc->params)) == uc_len)
-                            dyn_set_ref(DYN_DICT_GET_I_REF(&tmp2, 0),
-                                        VM_STACK_REF(us_i));
-                        us_i = 1;
-                    }
-                }
-
-                for (uc_i = 0; uc_i<uc_len; ++uc_i) {
-                    dyn_move(VM_STACK_REF(us_len+uc_i),
-                             DYN_DICT_GET_I_REF(&tmp2, uc_i+us_i));
-                }
-
+                // if params to pass exist
                 if (uc_len) {
-                    dyn_move(VM_STACK_END, VM_STACK_REF_END(uc_len-1));
+                    dyn_set_list_len(&env->params, uc_len);
 
+                    for (uc_i = uc_len; uc_i; --uc_i) {
+                        dyn_move(VM_STACK_REF_END(uc_i-1),
+                                 dyn_list_push_none(&env->params));
+                    }
+                    // move function before params ...
+                    DYN_MOVE(VM_STACK_END, VM_STACK_REF_END(uc_len-1));
+                    // delete params
                     dyn_list_popi(env_stack, uc_len);
 
-                    dyc_ptr = VM_STACK_END;
-                    if (DYN_IS_REFERENCE(dyc_ptr))
-                        dyc_ptr = dyc_ptr->data.ref;
+//                    dyc_ptr = VM_STACK_END;
+//                    if (DYN_IS_REFERENCE(dyc_ptr))
+//                        dyc_ptr = dyc_ptr->data.ref;
                 }
+
                 // reference to external fct_call
                 dyn_list_push_none(env_stack);
                 if (dyc_ptr2)
@@ -562,17 +564,13 @@ case CALL_FCT:
                 dyn_set_bool(dyn_list_push_none(env_stack), pop);
                 pop = 0;
 
+                dyn_set_int(dyn_list_push_none(env_stack), env->sp);
                 dyn_set_extern(dyn_list_push_none(env_stack), (void*)env->data);
                 dyn_set_extern(dyn_list_push_none(env_stack), (void*)pc);
 
+                env->pc = DYN_FCT_GET_CODE(dyc_ptr);
 
-                pc = dyn_fct_get_ss(dyc_ptr);
-
-
-                dyn_move(&tmp2, dyn_list_push_none(env_stack));
-
-                goto L_SWITCH_END;
-
+                goto GOTO__INIT_STACK;
             }
         }
 
@@ -595,6 +593,23 @@ case CALL_FCT:
 
     break;
 
+
+/*---------------------------------------------------------------------------*/
+case PROC_LOAD:
+/*---------------------------------------------------------------------------*/
+    if (DYN_NOT_NONE(&env->params))
+    {
+        dyc_ptr = VM_LOCAL;
+
+        uc_len = DYN_LIST_LEN(&env->params);
+
+        for (uc_i = 0; uc_i<uc_len; ++uc_i)
+            dyn_move(DYN_LIST_GET_REF(&env->params, uc_i), DYN_DICT_GET_I_REF(dyc_ptr, uc_i));
+
+        dyn_free(&env->params);
+    }
+    break;
+
 /*---------------------------------------------------------------------------*/
 case FJUMP:
 /*---------------------------------------------------------------------------*/
@@ -615,13 +630,7 @@ case PROC:
     us_len = *((dyn_ushort*) pc);  // bytecode length
     pc+=2;
 
-    dyn_list_pop(env_stack, &tmp2);
-
-    dyn_set_fct_ss(&tmp,
-                   &tmp2,
-                   us_len,
-                   pc,
-                   cp_str);
+    dyn_set_fct(&tmp, pc, us_len, cp_str);
 
     pc += us_len;
 
@@ -1050,12 +1059,7 @@ case REC_SET:
     if (uc_i == EXIT)
         dyn_list_push(env_stack, &tmp);
     else {
-        dyc_ptr = VM_LOCAL;
-        uc_len = DYN_LIST_LEN(&tmp);
-        for (uc_i = 0; uc_i < uc_len; ++uc_i) {
-            dyn_move(DYN_LIST_GET_REF(&tmp, uc_i),
-                     DYN_DICT_GET_I_REF(dyc_ptr, uc_i));
-        }
+        dyn_move(&tmp, &env->params);
         pop = 0;
     }
     break;
@@ -1338,6 +1342,7 @@ void  vm_printf (dyn_const_str str, dyn_char newline)
 
 void vm_free (vm_env* env)
 {
+    dyn_free(&env->params);
     dyn_free(&env->rslt);
     dyn_list_free(&env->stack);
     dyn_dict_free(&env->memory);

@@ -31,6 +31,8 @@ struct vm {
     dyn_c rslt;                 /**< Result container, that is used to store the
                                      result of the computation, if and only ift he
                                      process is finised. */
+
+    dyn_c params;
     dyn_c* loc;
 
     dyn_str data;               /**< Repository for storing strings and string

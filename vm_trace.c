@@ -1,6 +1,8 @@
 #include "vm.h"
 #include "vm_trace.h"
 
+#ifdef S2_DEBUG
+
 static dyn_const_str opcodes[] = {
     "SP_SAVEX",
     "SP_SAVE",
@@ -71,6 +73,8 @@ static dyn_const_str opcodes[] = {
     "IT_UNIQUE",
 
     "YIELD",
+
+    "PROC_LOAD",
 };
 
 static dyn_const_str operators[] = {
@@ -104,7 +108,7 @@ static dyn_const_str operators[] = {
 
   "EX" };
 
-#ifdef S2_DEBUG
+
 void vm_trace (vm_env* env, dyn_char* code)
 {
     dyn_char log[140] = {'0','0','0','0',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',

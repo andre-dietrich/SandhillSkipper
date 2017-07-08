@@ -84,6 +84,8 @@
 
 #define YIELD       51
 
+#define PROC_LOAD   52
+
 #define OP          (char) 0x40 //0b01000000
 #define OPX         (char) 0x60 //0b01100000
 #define OP_I        (char) 0x1f //0b00011111
