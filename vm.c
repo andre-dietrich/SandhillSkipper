@@ -482,8 +482,9 @@ case STORE_RF:
 
     dyn_list_popi(env_stack, 1);
 
-    if (env->loc && DYN_TYPE(dyc_ptr->data.ref)==FUNCTION)
-        dyn_dict_set_loc(env->loc);
+// TODO loc reference
+//    if (env->loc && DYN_TYPE(dyc_ptr->data.ref)==FUNCTION)
+//        dyn_dict_set_loc(env->loc);
 
     break;
 /*---------------------------------------------------------------------------*/
