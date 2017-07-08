@@ -1243,6 +1243,7 @@ dyn_int vm_size (vm_env* env)
     dyn_int bytes = sizeof(vm_env);
     bytes += dyn_size(&env->stack);
     bytes += dyn_size(&env->memory);
+    bytes += dyn_size(&env->params);
     bytes += dyn_size(&env->functions);
     bytes += dyn_size(&env->rslt);
     return bytes;
@@ -1255,6 +1256,7 @@ void vm_reset (vm_env* env, dyn_char hard)
     if (hard) {
         dyn_dict_empty(&env->memory);
         dyn_free(&env->rslt);
+        dyn_free(&env->params);
     }
 
     env->status = VM_OK;
