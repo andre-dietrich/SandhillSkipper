@@ -4,24 +4,25 @@
 #ifdef S2_DEBUG
 
 static dyn_const_str opcodes[] = {
+    "ENC_NONE",
+    "ENC_TRUE",
+    "ENC_FALSE",
+    "ENC_INT1",
+    "ENC_INT2",
+    "ENC_INT4",
+    "ENC_FLOAT",
+    "ENC_LIST",
+    "ENC_SET",
+    "ENC_PROC",
+
+    "ENC_STR",
+    "ENC_DICT",
+
     "SP_SAVEX",
     "SP_SAVE",
 
     "RET",
     "RET_P",
-
-    "CST_N",
-    "CST_0",
-    "CST_1",
-    "CST_B",
-    "CST_S",
-    "CST_I",
-    "CST_F",
-
-    "CST_STR",
-    "CST_LST",
-    "CST_SET",
-    "CST_DCT",
 
     "LOC",
     "LOCX",
@@ -37,8 +38,6 @@ static dyn_const_str opcodes[] = {
 
     "FJUMP",
     "JUMP",
-
-    "PROC",
 
     "IT_INIT",
     "IT_NEXT0",
@@ -150,40 +149,48 @@ void vm_trace (vm_env* env, dyn_char* code)
     log[dyn_strlen(log)]=' ';
 
     switch ( (*env->pc) & POP_I ) {
-        case PROC    : dyn_itoa(&log[16], *((dyn_byte*) env->pc+1));
-                       dyn_strcat(log, (dyn_str)", ");
-                       dyn_itoa(&log[dyn_strlen(log)], *((dyn_ushort*) (env->pc+2)));
-                       break;
-        case CST_S   :
-        case TRY_1   :
-        case JUMP    :
-        case FJUMP   : dyn_itoa(&log[16], *((dyn_short*) (env->pc+1)));
-                       break;
-        case EXIT    :
+        case ENC_PROC:
+            dyn_itoa(&log[16], *((dyn_byte*) env->pc+1));
+            dyn_strcat(log, (dyn_str)", ");
+            dyn_itoa(&log[dyn_strlen(log)], *((dyn_ushort*) (env->pc+2)));
+            break;
+        case ENC_INT2:
+        case TRY_1:
+        case JUMP:
+        case FJUMP:
+            dyn_itoa(&log[16], *((dyn_short*) (env->pc+1)));
+            break;
+        case EXIT:
         case IT_GROUP:
         case CALL_FCT:
-        case CALL_FCTX: dyn_itoa(&log[16], *((dyn_byte*)(env->pc+1)));
-        case IT_AS   :
-        case CST_B   : dyn_itoa(&log[16], *((dyn_char*)(env->pc+1)));
-                       break;
-        case CST_DCT :
-        case LOC     :
-        case LOCX    :
-        case CST_STR :
-        case LOAD    :
+        case CALL_FCTX:
+            dyn_itoa(&log[16], *((dyn_byte*)(env->pc+1)));
+        case IT_AS:
+        case ENC_INT1:
+            dyn_itoa(&log[16], *((dyn_char*)(env->pc+1)));
+            break;
+        case ENC_DICT:
+        case LOC:
+        case LOCX:
+        case ENC_STRING:
+        case LOAD:
         case STORE_LOC:
+        case STORE:
         default:
-        case STORE   : dyn_itoa(&log[16], *((dyn_byte*) (env->pc+1)));
-                       break;
+            dyn_itoa(&log[16], *((dyn_byte*) (env->pc+1)));
+            break;
 #ifdef S2_SET
-        case CST_SET :
+        case ENC_SET:
 #endif
-        case CST_LST : dyn_itoa(&log[16], *((dyn_ushort*) (env->pc+1)));
-                       break;
-        case CST_I   : dyn_itoa(&log[16], *((dyn_int*) (env->pc+1)));
-                       break;
-        case CST_F   : dyn_ftoa(&log[16], *((dyn_float*) (env->pc+1)));
-                       break;
+        case ENC_LIST:
+            dyn_itoa(&log[16], *((dyn_ushort*) (env->pc+1)));
+            break;
+        case ENC_INT4:
+            dyn_itoa(&log[16], *((dyn_int*) (env->pc+1)));
+            break;
+        case ENC_FLOAT:
+            dyn_ftoa(&log[16], *((dyn_float*) (env->pc+1)));
+            break;
         //case CALL_FCT: dyn_itoa(&log[16], *(env->pc+1));
                        //dyn_strcat(log, ", ");
                        //dyn_itoa(&log[dyn_strlen(log)], (dyn_byte)*(env->pc+1));

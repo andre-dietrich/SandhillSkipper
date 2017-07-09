@@ -12,44 +12,28 @@
 #ifndef OPCODE_H__
 #define OPCODE_H__
 
-#define SP_SAVEX     0      /**< byte: Initialize vm.data with the follwoing
+#define SP_SAVEX    12      /**< byte: Initialize vm.data with the follwoing
                                  char array and set initial stack-pointer     */
-#define SP_SAVE      1      /**< Store current stack-pointer on stack         */
+#define SP_SAVE     13      /**< Store current stack-pointer on stack         */
 
-#define RET          2      /**< Remove last stack-frame                      */
-#define RET_P        3      /**< Remove last stack-frame and restore pc/data/sp/...
+#define RET         14      /**< Remove last stack-frame                      */
+#define RET_P       15      /**< Remove last stack-frame and restore pc/data/sp/...
                                  which are stored also on the stack           */
 
-#define CST_N        4      /**< Push None value to stack.                    */
-#define CST_0        5      /**< Push Boolean False to stack.                 */
-#define CST_1        6      /**< Push Boolean True to stack.                  */
-#define CST_B        7      /**< Push Integer to stack, second element is a
-                                 char, which is used for small numeric values.*/
-#define CST_S        8
-#define CST_I        9         // int,   push int to stack
-#define CST_F       10         // float, push float to stack
+#define LOC         16
+#define LOCX        17
+#define LOAD        18        // char* until \0, read var from memory and push to stack
+#define ELEM        19
 
-#define CST_STR     11         // char* until \0, push string on stack
-#define CST_LST     12         // unsigned short, pop number of elements from stack and store to list .... push list on stack
-#define CST_SET     13
-#define CST_DCT     14
+#define STORE       20        // char* until \0, pop stack and store to memory
+#define STORE_RF    21
+#define STORE_LOC   22
 
-#define LOC         15
-#define LOCX        16
-#define LOAD        17        // char* until \0, read var from memory and push to stack
-#define ELEM        18
+#define CALL_FCTX   23
+#define CALL_FCT    24      // unsigned char, char* until \0; of parameters, function name
 
-#define STORE       19        // char* until \0, pop stack and store to memory
-#define STORE_RF    20
-#define STORE_LOC   21
-
-#define CALL_FCTX   22
-#define CALL_FCT    23      // unsigned char, char* until \0; of parameters, function name
-
-#define FJUMP       24      // short
-#define JUMP        25      // short
-
-#define PROC        26      // unsigned char, unsigned short
+#define FJUMP       25      // short
+#define JUMP        26      // short
 
 #define IT_INIT     27
 #define IT_NEXT0    28
