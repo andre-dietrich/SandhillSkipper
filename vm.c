@@ -249,6 +249,18 @@ do{
         pop = 1;
 
 switch( uc_i = (dyn_byte)(POP_I & *pc++) ){
+  case ENC_NONE:
+  case ENC_TRUE:
+  case ENC_FALSE:
+  case ENC_INT1:
+  case ENC_INT2:
+  case ENC_INT4:
+  case ENC_FLOAT:
+  case ENC_LIST:
+  case ENC_SET:
+      pc = dyn_decode(uc_i, pc, env_stack);
+      //pc--;
+      break;
 /*---------------------------------------------------------------------------*/
 case RETX:
     dyn_list_popi(env_stack, VM_STACK_LEN - env->sp - 3);
@@ -319,18 +331,18 @@ LABEL_SP:
     goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
-case ENC_TRUE:
-case ENC_FALSE:
+//case ENC_TRUE:
+//case ENC_FALSE:
 /*---------------------------------------------------------------------------*/
-    dyn_set_bool(&tmp, uc_i == ENC_TRUE ? 1 : 0);
-    goto GOTO__PUSH_TMP;
+//    dyn_set_bool(&tmp, uc_i == ENC_TRUE ? 1 : 0);
+//    goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
-case ENC_INT1:
-case ENC_INT2:
-case ENC_INT4:
+//case ENC_INT1:
+//case ENC_INT2:
+//case ENC_INT4:
 /*---------------------------------------------------------------------------*/
-    dyn_set_int(&tmp, uc_i == ENC_INT1
+/*    dyn_set_int(&tmp, uc_i == ENC_INT1
                       ? *((dyn_char*) pc)
                       : ( uc_i == ENC_INT2
                           ? *((dyn_short*) pc )
@@ -338,20 +350,20 @@ case ENC_INT4:
 
     pc += (uc_i == ENC_INT1) ? 1 : ( uc_i == ENC_INT2
                                   ? 2 : 4 );
-
+*/
 /*---------------------------------------------------------------------------*/
-case ENC_NONE:
+//case ENC_NONE:
 GOTO__PUSH_TMP:
 /*---------------------------------------------------------------------------*/
    dyn_move(&tmp, dyn_list_push_none(env_stack));
    break;
 
 /*---------------------------------------------------------------------------*/
-case ENC_FLOAT:
+//case ENC_FLOAT:
 /*---------------------------------------------------------------------------*/
-    dyn_set_float(&tmp, *((dyn_float*) pc));
-    pc+=4;
-    goto GOTO__PUSH_TMP;
+//    dyn_set_float(&tmp, *((dyn_float*) pc));
+//    pc+=4;
+//    goto GOTO__PUSH_TMP;
 
 /*---------------------------------------------------------------------------*/
 case ENC_STRING:
@@ -362,31 +374,31 @@ case ENC_STRING:
     break;
 
 /*---------------------------------------------------------------------------*/
-case ENC_LIST:
-case ENC_SET:
+//case ENC_LIST:
+//case ENC_SET:
 case ENC_DICT:
 /*---------------------------------------------------------------------------*/
     us_len = *((dyn_ushort*) pc);
     pc+=2;
     us_i = us_len + 1;
 
-    if (uc_i == ENC_LIST) {
-        dyn_set_list_len(&tmp, us_len);
-        while (--us_i) {
-            dyn_move( VM_STACK_REF_END(us_i), dyn_list_push_none(&tmp) );
-        }
-    } else if (uc_i == ENC_DICT) {
+//    if (uc_i == ENC_LIST) {
+//        dyn_set_list_len(&tmp, us_len);
+//        while (--us_i) {
+//            dyn_move( VM_STACK_REF_END(us_i), dyn_list_push_none(&tmp) );
+//        }
+//    } else if (uc_i == ENC_DICT) {
         dyn_set_dict(&tmp, us_len);
         while (--us_i) {
             dyn_move( VM_STACK_REF_END(us_i),
                       dyn_dict_insert(&tmp, VM_DATA((dyn_byte)*pc++), &tmp2));
         }
-    } else {
-        dyn_set_set_len(&tmp, us_len);
-        while (--us_i) {
-            dyn_set_insert(&tmp, VM_STACK_REF_END(us_i));
-        }
-    }
+//    } else {
+//        dyn_set_set_len(&tmp, us_len);
+//        while (--us_i) {
+//            dyn_set_insert(&tmp, VM_STACK_REF_END(us_i));
+//        }
+//    }
 
     dyn_list_popi(env_stack, us_len);
 
