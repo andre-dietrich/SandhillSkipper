@@ -1155,10 +1155,12 @@ trilean vm_get_iterator (dyn_c* iter_rslt, dyn_c* iter_dict, dyn_int count)
             case SET:
 #endif
             case LIST: {
-                dyn_set_ref(&rslt_list->container[us_i],
-                            &ptr->data.list->container[j % DYN_LIST_LEN(ptr)]);
+                if ( DYN_LIST_LEN(ptr) ) {
+                    dyn_set_ref(&rslt_list->container[us_i],
+                                &ptr->data.list->container[j % DYN_LIST_LEN(ptr)]);
 
-                j /= DYN_LIST_LEN(ptr);
+                    j /= DYN_LIST_LEN(ptr);
+                }
                 break;
             }
             case DICT: {
