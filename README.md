@@ -1,14 +1,15 @@
 # SandhillSkipper
+
 SelectScript virtual machine implementation in C
 
 ## Source
 
-https://github.com/ESS-OVGU/SandhillSkipper
+https://github.com/andre-dietrich/SandhillSkipper
 
 ## Installation
 
 ```bash
-git clone --recursive https://github.com/ESS-OVGU/SandhillSkipper
+git clone --recursive https://github.com/andre-dietrich/SandhillSkipper
 ```
 
 ## Usage
@@ -21,24 +22,24 @@ It includes a complete virtual machine implementation, that can even be used
 on embedded microcontrollers with less than 32KB of flash. See therefore the
 S2ino project at:
 
-https://github.com/ESS-OVGU/S2ino
+https://github.com/andre-dietrich/S2ino
 
 ... a portation to Arduino
 
 Although it can be used also by other languages, it is mainly used to
-implement a VM for the SelectScript programming language. The bytecode 
+implement a VM for the SelectScript programming language. The bytecode
 compiler for this can be downloaded from:
 
-https://github.com/ESS-OVGU/SelectScriptC
- 
+https://github.com/andre-dietrich/SelectScriptC
+
 
 ## Todo
 
-[] documentation
+[ ] documentation
 
-[] yield
+[ ] yield
 
-[] async
+[ ] async
 
 ## License
 
@@ -48,4 +49,3 @@ details
 Copyright (C) 2016-2017
 
 André Dietrich <dietrich@ivs.cs.uni-magdeburg.de>
-
